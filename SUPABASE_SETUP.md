@@ -23,7 +23,7 @@ Dans le projet Supabase :
 
 ## 4. Autoriser l'email/password
 
-`Authentication` → `Sign In / Providers` → `Email` → **active Email**, et **désactive « Confirm email »** pour测试 immédiat (ou garde-la active et confirme le mail reçu).
+`Authentication` → `Sign In / Providers` → `Email` → **active Email**, et **désactive « Confirm email »** pour tester immédiatement (ou garde-la active et confirme le mail reçu).
 
 ## 5. Déployer l'IA (Edge Function)
 
@@ -34,8 +34,10 @@ npm install -g supabase
 supabase login
 supabase link --project-ref XXXX   # XXXX = l'identifiant dans l'URL du projet
 supabase secrets set GEMINI_API_KEY=TA_CLE_ICI
-supabase functions deploy classify-task --no-verify-jwt
+supabase functions deploy classify-task
 ```
+
+La vérification du token reste activée (comportement par défaut) : seule une personne connectée peut appeler l'IA.
 
 La clé Gemini reste **sur le serveur Supabase**. Elle n'apparaît jamais dans l'app ni dans GitHub.
 

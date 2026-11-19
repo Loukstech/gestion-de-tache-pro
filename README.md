@@ -9,6 +9,14 @@ Assistant vocal qui écoute, comprend et **classe tes tâches en raisonnant**. M
 - Elle enregistre la tâche et te répond **à l'écrit et à l'oral**.
 - Même compte sur téléphone et PC → mêmes tâches partout.
 
+## Documentation
+
+| Document | Contenu |
+|---|---|
+| [`SUPABASE_SETUP.md`](SUPABASE_SETUP.md) | Configurer le projet, la base et la fonction IA |
+| [`USER_GUIDE.md`](USER_GUIDE.md) | Utiliser l'assistant, la voix, les filtres et l'installation |
+| [`ARCHITECTURE.md`](ARCHITECTURE.md) | Flux de données, choix techniques, sécurité, schéma |
+
 ## Installer
 
 1. Suis [`SUPABASE_SETUP.md`](SUPABASE_SETUP.md) : créer le projet, exécuter le SQL, déployer la fonction IA.
