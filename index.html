@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="Gestionnaire de tâches professionnel, mobile-first, installable et utilisable hors ligne.">
+  <meta name="theme-color" content="#0f172a">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.png" type="image/png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="stylesheet" href="styles.css">
+  <title>Gestion de tâches pro</title>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">✓</span>
+        <div>
+          <h1>Tâches pro</h1>
+          <p class="brand-sub">Votre quotidien, sous contrôle</p>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <button id="theme-toggle" class="icon-btn" type="button" aria-label="Changer de thème" title="Thème clair / sombre">◐</button>
+        <button id="install-btn" class="install-btn" type="button" hidden>Installer l'app</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <aside class="sidebar" aria-label="Filtres et statistiques">
+        <section class="panel stats-panel">
+          <h2>Aujourd'hui</h2>
+          <div class="stats">
+            <div class="stat"><strong id="stat-active">0</strong><span>à faire</span></div>
+            <div class="stat"><strong id="stat-done">0</strong><span>terminées</span></div>
+            <div class="stat"><strong id="stat-late">0</strong><span>en retard</span></div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>Priorité</h2>
+          <div id="priority-filters" class="filter-list" role="group" aria-label="Filtrer par priorité"></div>
+        </section>
+
+        <section class="panel">
+          <h2>Catégories</h2>
+          <div id="category-filters" class="filter-list" role="group" aria-label="Filtrer par catégorie"></div>
+        </section>
+
+        <p class="kbd-hint">Raccourcis : <kbd>N</kbd> nouvelle tâche · <kbd>/</kbd> recherche</p>
+      </aside>
+
+      <section class="content" aria-label="Liste des tâches">
+        <div class="search-row">
+          <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 21l-4.35-4.35M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16z"/></svg>
+          <input id="search" type="search" placeholder="Rechercher une tâche…" aria-label="Rechercher une tâche" autocomplete="off">
+        </div>
+
+        <form id="quick-add" class="quick-add" autocomplete="off">
+          <input id="quick-title" type="text" placeholder="Ajouter une tâche rapide…" aria-label="Nouvelle tâche" maxlength="160" required>
+          <button class="primary-btn" type="submit">Ajouter</button>
+        </form>
+
+        <div class="mobile-filters" id="mobile-status-filters" role="group" aria-label="Filtrer par statut"></div>
+
+        <div class="list-head">
+          <h2 id="list-title">Toutes les tâches</h2>
+          <button id="clear-done" class="text-btn" type="button">Effacer les terminées</button>
+        </div>
+
+        <ul id="task-list" class="task-list"></ul>
+        <div id="empty-state" class="empty-state" hidden>
+          <div class="empty-mark" aria-hidden="true">✓</div>
+          <p id="empty-message">Aucune tâche pour le moment.</p>
+        </div>
+      </section>
+    </main>
+
+    <nav class="bottom-nav" id="bottom-nav" aria-label="Statut des tâches"></nav>
+  </div>
+
+  <button id="fab" class="fab" type="button" aria-label="Nouvelle tâche">+</button>
+
+  <dialog id="task-dialog" class="task-dialog">
+    <form id="task-form" method="dialog">
+      <div class="dialog-head">
+        <h2 id="dialog-title">Nouvelle tâche</h2>
+        <button id="dialog-close" class="icon-btn" type="button" aria-label="Fermer">✕</button>
+      </div>
+      <label>Titre
+        <input id="f-title" name="title" type="text" maxlength="160" required placeholder="Que faut-il faire ?">
+      </label>
+      <label>Notes
+        <textarea id="f-notes" name="notes" rows="3" maxlength="2000" placeholder="Détails, lien, contexte…"></textarea>
+      </label>
+      <div class="form-grid">
+        <label>Priorité
+          <select id="f-priority" name="priority">
+            <option value="low">Basse</option>
+            <option value="medium" selected>Moyenne</option>
+            <option value="high">Haute</option>
+          </select>
+        </label>
+        <label>Échéance
+          <input id="f-due" name="due" type="date">
+        </label>
+      </div>
+      <label>Catégorie
+        <input id="f-category" name="category" type="text" maxlength="60" list="category-options" placeholder="Ex. Projet Alpha">
+        <datalist id="category-options"></datalist>
+      </label>
+      <div class="dialog-actions">
+        <button id="delete-task" class="danger-btn" type="button" hidden>Supprimer</button>
+        <span class="spacer"></span>
+        <button id="cancel-task" class="ghost-btn" type="button">Annuler</button>
+        <button class="primary-btn" type="submit">Enregistrer</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <script src="app.js" defer></script>
+</body>
+</html>
