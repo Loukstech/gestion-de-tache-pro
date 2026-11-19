@@ -1,9 +1,12 @@
-const CACHE = 'gdtp-shell-v1';
+const CACHE = 'gdtp-shell-v2';
 const SHELL = [
   './',
   './index.html',
   './styles.css',
   './app.js',
+  './config.js',
+  './supabase.js',
+  './voice.js',
   './manifest.webmanifest',
   './icons/icon-192.png',
   './icons/icon-512.png',

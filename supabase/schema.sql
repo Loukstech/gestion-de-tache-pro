@@ -1,0 +1,38 @@
+-- Run this in the Supabase SQL editor (Dashboard > SQL Editor > New query).
+-- It creates the tasks table, enables row-level security, and adds per-user policies.
+
+create extension if not exists pgcrypto;
+
+create table if not exists public.tasks (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  title text not null,
+  notes text not null default '',
+  priority text not null default 'medium' check (priority in ('high', 'medium', 'low')),
+  category text not null default '',
+  due date,
+  done boolean not null default false,
+  ai_reasoning text not null default '',
+  created_at timestamptz not null default now(),
+  completed_at timestamptz
+);
+
+create index if not exists tasks_user_created_idx on public.tasks (user_id, created_at desc);
+
+alter table public.tasks enable row level security;
+
+drop policy if exists "tasks_select_own" on public.tasks;
+create policy "tasks_select_own" on public.tasks
+  for select to authenticated using (auth.uid() = user_id);
+
+drop policy if exists "tasks_insert_own" on public.tasks;
+create policy "tasks_insert_own" on public.tasks
+  for insert to authenticated with check (auth.uid() = user_id);
+
+drop policy if exists "tasks_update_own" on public.tasks;
+create policy "tasks_update_own" on public.tasks
+  for update to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+drop policy if exists "tasks_delete_own" on public.tasks;
+create policy "tasks_delete_own" on public.tasks
+  for delete to authenticated using (auth.uid() = user_id);
