@@ -96,6 +96,27 @@ const INTENT_RULES = [
 
 const NEGATION_GUARD = boundaryRegex('non|laisse tomber|annule tout|jamais|pas besoin|arrete|arrête|stop|tais-toi')
 
+// Une phrase qui n'est pas une consigne : question, bavardage, confirmation seule.
+// Elle ne doit jamais devenir une tâche implicite.
+const QUESTION_GUARD = [
+  /^(?:est[- ]?ce\b|est ce\b|qu'est[- ]?ce\b|qu est ce\b|comment\b|pourquoi\b|quand\b|où\b|ou\b|qui\b|combien\b|quel(?:le|s|les)?\b)/i,
+  /\?\s*$/,
+  /\b(?:tu|vous)\s+(?:me\s+|m'|te\s+|t'|nous\s+|vous\s+)?(?:comprends|comprend|entends|entend|écoutes|écoute|parles|parle|sais|savez|peux|pouvez|connais|connaissez)\b/i,
+]
+
+const SMALL_TALK_GUARD = [
+  /^(?:bonjour|bonsoir|salut|coucou|hello|hey|ok\b|okay\b|d'accord\b|dac\b|merci\b|pardon\b|excuse(?:z|-moi)?\b|oui\b|non\b|peut[- ]?être\b)/i,
+  /^(?:je t'aime|je vous aime|j'aime|ça va\b|ca va\b|tu vas bien\b|vous allez bien\b)/i,
+]
+
+const CONVERSATION_GUARDS = [...QUESTION_GUARD, ...SMALL_TALK_GUARD]
+
+function matchesConversation(value) {
+  const raw = String(value || '')
+  const foldedValue = fold(raw)
+  return CONVERSATION_GUARDS.some((pattern) => pattern.test(raw) || pattern.test(foldedValue))
+}
+
 const NOISE_FILLERS = [
   boundaryRegex("s'il te plait|stp|s'il vous plait|svp|merci beaucoup|merci", 'gi'),
   boundaryRegex("est-ce que tu peux|est ce que tu peux|peux-tu|pourrais-tu|tu peux|tu pourrais", 'gi'),
@@ -136,9 +157,21 @@ const CREATION_PREFIXES = [
 
 export function interpret(rawInput, options = {}) {
   const now = options.now ? new Date(options.now) : new Date()
+  const rawText = String(rawInput || '').trim()
   const normalized = normalizeFrench(rawInput)
   if (!normalized.trim()) {
-    return { text: '', intent: 'unknown', intents: [], tasks: [], filters: {}, confidence: 0, empty: true, now }
+    return {
+      text: rawText,
+      raw: rawInput,
+      intent: 'unknown',
+      intents: [],
+      tasks: [],
+      filters: {},
+      confidence: 0,
+      empty: true,
+      notice: matchesConversation(rawText) ? 'conversation' : null,
+      now,
+    }
   }
 
   const segments = splitSegments(normalized)
@@ -177,6 +210,7 @@ export function interpret(rawInput, options = {}) {
     targetAll: Boolean(primary?.targetAll),
     groupBy: primary?.groupBy || null,
     scope: primary?.scope || [],
+    notice: results.find((result) => result.notice)?.notice || null,
     confidence: results.reduce((max, result) => Math.max(max, result.confidence || 0), 0),
     mentions: results.flatMap((result) => result.mentions || []),
   }
@@ -283,6 +317,9 @@ function interpretSegment(segment, now, options) {
     case 'help': return { text, intent: 'help', confidence: 0.95, tasks: [], filters: {} }
     case 'undo': return { text, intent: 'undo', confidence: 0.9, tasks: [], filters: {} }
     default: {
+      if (matchesConversation(text)) {
+        return { text, intent: 'unknown', confidence: 0.4, tasks: [], filters: {}, notice: 'conversation' }
+      }
       const creation = buildCreate(text, now, options, 0.6, true)
       if (creation.tasks.length && creation.tasks[0].title.length > 2) return { ...creation, implicit: true }
       return { text, intent: 'unknown', confidence: 0.2, tasks: [], filters: {} }

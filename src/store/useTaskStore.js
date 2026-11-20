@@ -266,7 +266,7 @@ export const useTaskStore = create((set, get) => ({
     let interpretation = interpret(text, { now, source: meta.source })
     // Actions destructrices et modifications restent exclusivement locales.
     // Gemini ne reçoit que la phrase, jamais l'ensemble des tâches.
-    if (get().settings.aiEnabled && ['create', 'list', 'search', 'unknown'].includes(interpretation.intent)) {
+    if (get().settings.aiEnabled && !interpretation.notice && ['create', 'list', 'search', 'unknown'].includes(interpretation.intent)) {
       try {
         const ai = await interpretWithAi(text, { now, source: meta.source })
         if (ai) interpretation = ai
@@ -291,6 +291,28 @@ export const useTaskStore = create((set, get) => ({
       const answer = buildAnswer(interpretation, get().tasks, now)
       get().pushMessage({ role: 'assistant', text: answer.spoken, answer })
       set({ assistant: { thinking: false } })
+      return { answer }
+    }
+
+    // Phrase conversationnelle ou négation : on répond, mais on ne crée rien
+    // et on ne propose même pas de transformer ça en tâche.
+    if (interpretation.intent === 'unknown' && (interpretation.notice === 'conversation' || interpretation.notice === 'negation')) {
+      const isNegation = interpretation.notice === 'negation'
+      const answer = {
+        kind: 'chat',
+        headline: isNegation ? 'D’accord' : 'Je suis là',
+        spoken: isNegation
+          ? 'D’accord, je ne fais rien.'
+          : 'Oui, je te comprends. Je ne crée pas de tâche pour ça. Dis-moi une action à faire ou une question sur tes tâches.',
+        groups: [],
+        stats: [],
+        chips: [
+          { label: 'Ajouter une tâche', action: 'create' },
+          { label: 'Voir mes tâches', command: 'qu’est-ce que j’ai à faire aujourd’hui' },
+        ],
+      }
+      get().pushMessage({ role: 'assistant', text: answer.spoken, answer })
+      set({ assistant: { thinking: false }, pendingConfirmation: null })
       return { answer }
     }
 

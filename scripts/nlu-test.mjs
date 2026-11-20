@@ -302,6 +302,23 @@ for (const [text, range, category] of [
   })
 }
 
+console.log('\n═══ 8. PHRASES NON-TÂCHES ═══\n')
+
+for (const phrase of ['est-ce que tu me comprends', 'tu me comprends ?', 'comment ça va', 'bonjour', 'merci']) {
+  check(`« ${phrase} » ne crée pas de tâche`, () => {
+    const result = interpret(phrase, { now: NOW })
+    return assert(result.intent === 'unknown' && result.tasks.length === 0 && result.notice === 'conversation',
+      `intent=${result.intent}, tâches=${result.tasks.length}, notice=${result.notice}`)
+  })
+}
+
+for (const phrase of ['Acheter médicaments', 'Prendre rendez-vous chez le dentiste']) {
+  check(`« ${phrase} » reste une création implicite`, () => {
+    const result = interpret(phrase, { now: NOW })
+    return assert(result.intent === 'create' && result.tasks.length === 1, `intent=${result.intent}, tâches=${result.tasks.length}`)
+  })
+}
+
 console.log(`\n${'═'.repeat(46)}`)
 console.log(`  Résultat : ${passed} réussis · ${failed} échoués`)
 console.log('═'.repeat(46))
