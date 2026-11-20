@@ -10,3 +10,11 @@ createRoot(rootElement).render(
     <App />
   </StrictMode>,
 )
+
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {
+      // Le mode hors ligne reste optionnel : l'app fonctionne quand même en ligne.
+    })
+  })
+}

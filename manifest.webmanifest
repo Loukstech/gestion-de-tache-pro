@@ -1,7 +1,7 @@
 {
-  "name": "Gestion de tâches pro",
-  "short_name": "Tâches pro",
-  "description": "Gestionnaire de tâches professionnel, mobile-first et utilisable hors ligne.",
+  "name": "TaskVox Pro",
+  "short_name": "TaskVox",
+  "description": "Gestionnaire de tâches vocal en français, mobile-first et utilisable hors ligne.",
   "id": "./",
   "start_url": "./",
   "scope": "./",
