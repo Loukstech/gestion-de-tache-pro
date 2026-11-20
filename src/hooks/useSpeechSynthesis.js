@@ -2,11 +2,28 @@
  * Synthèse vocale (Web Speech API) — gratuite et native.
  * L'assistant répond à voix haute si l'option est activée.
  */
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 const supported = typeof window !== 'undefined' && 'speechSynthesis' in window
 
 export const speechSynthesisSupported = supported
+
+const NATURAL_HINT = /natural|neural|premium|online|google|aria|elodie|hortense|henri|sonia/i
+const GOOD_FRENCH_HINT = /amelie|audrey|thomas|nicolas|denise/i
+
+/** Étiquette affichée dans les réglages pour repérer les meilleures voix. */
+export function describeVoice(voice) {
+  if (!voice) return ''
+  return `${voice.name}${NATURAL_HINT.test(voice.name) ? ' · naturelle' : ''}`
+}
+
+function voiceScore(voice) {
+  let score = 0
+  if (NATURAL_HINT.test(voice.name)) score += 3
+  else if (GOOD_FRENCH_HINT.test(voice.name)) score += 2
+  if (voice.localService) score += 1
+  return score
+}
 
 export function useSpeechSynthesis({ language = 'fr-FR', rate = 1.04, pitch = 1, voiceName = null, enabled = true } = {}) {
   const [speaking, setSpeaking] = useState(false)
@@ -22,20 +39,19 @@ export function useSpeechSynthesis({ language = 'fr-FR', rate = 1.04, pitch = 1,
     return () => window.speechSynthesis.removeEventListener('voiceschanged', load)
   }, [])
 
+  const frenchVoices = useMemo(
+    () => voices.filter((voice) => voice.lang?.toLowerCase().startsWith('fr')).sort((a, b) => voiceScore(b) - voiceScore(a)),
+    [voices],
+  )
+
   const pickVoice = useCallback(() => {
-    if (!supported || !voices.length) return null
+    if (!supported || !frenchVoices.length) return null
     if (voiceName) {
       const named = voices.find((voice) => voice.name === voiceName)
       if (named) return named
     }
-    const french = voices.filter((voice) => voice.lang?.toLowerCase().startsWith('fr'))
-    if (!french.length) return null
-    const preferred =
-      french.find((voice) => /google|natural|amelie|audrey|thomas|nicolas|denise/i.test(voice.name)) ||
-      french.find((voice) => voice.localService) ||
-      french[0]
-    return preferred
-  }, [voices, voiceName])
+    return frenchVoices[0]
+  }, [voices, frenchVoices, voiceName])
 
   const speak = useCallback(
     (text) => {
@@ -73,5 +89,5 @@ export function useSpeechSynthesis({ language = 'fr-FR', rate = 1.04, pitch = 1,
     if (supported) window.speechSynthesis.cancel()
   }, [])
 
-  return { speak, cancel, speaking, supported, voices, frenchVoices: voices.filter((voice) => voice.lang?.toLowerCase().startsWith('fr')) }
+  return { speak, cancel, speaking, supported, voices, frenchVoices }
 }

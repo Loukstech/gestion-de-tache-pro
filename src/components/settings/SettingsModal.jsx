@@ -5,7 +5,7 @@ import Modal from '../primitives/Modal.jsx'
 import Icon from '../primitives/Icon.jsx'
 import { Switch, Segmented, Chip } from '../primitives/Bits.jsx'
 import { speechRecognitionSupported } from '../../hooks/useSpeechRecognition.js'
-import { speechSynthesisSupported } from '../../hooks/useSpeechSynthesis.js'
+import { speechSynthesisSupported, describeVoice } from '../../hooks/useSpeechSynthesis.js'
 import { CATEGORIES, CATEGORY_ORDER } from '../../nlu/lexicon.js'
 
 const ACCENTS = [
@@ -98,7 +98,7 @@ export default function SettingsModal({
             <div className="setting-row">
               <div className="setting-text">
                 <div className="setting-title" id="set-voice-name">Voix de synthèse</div>
-                <div className="setting-desc">{frenchVoices.length ? `${frenchVoices.length} voix française${frenchVoices.length > 1 ? 's' : ''} installée${frenchVoices.length > 1 ? 's' : ''} sur cet appareil` : 'Aucune voix française détectée : la voix par défaut du système sera utilisée'}</div>
+                <div className="setting-desc">{frenchVoices.length ? `${frenchVoices.length} voix française${frenchVoices.length > 1 ? 's' : ''} détectée${frenchVoices.length > 1 ? 's' : ''} · les meilleures en premier. « Tester la voix » pour comparer.` : 'Aucune voix française détectée : la voix par défaut du système sera utilisée'}</div>
               </div>
               <select
                 className="select"
@@ -109,7 +109,7 @@ export default function SettingsModal({
               >
                 <option value="">Automatique</option>
                 {frenchVoices.map((voice) => (
-                  <option key={voice.name} value={voice.name}>{voice.name}</option>
+                  <option key={voice.name} value={voice.name}>{describeVoice(voice)}</option>
                 ))}
               </select>
             </div>
