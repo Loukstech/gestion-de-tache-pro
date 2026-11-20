@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { storage, SETTINGS_ID } from '../lib/storage.js'
+import * as cloudSync from '../lib/sync.js'
 import { interpret } from '../nlu/parser.js'
 import { interpretWithAi } from '../nlu/ai.js'
 import { buildAnswer, filterTasks, sortTasks, matchesRange } from '../nlu/answers.js'
@@ -32,6 +33,18 @@ const DEFAULT_SETTINGS = {
 
 const MAX_MESSAGES = 60
 const MAX_UNDO = 12
+let cloudPushTimer = null
+
+const mergeTasks = (local, remote) => {
+  const byId = new Map()
+  ;[...(local || []), ...(remote || [])].forEach((task) => {
+    if (!task?.id) return
+    const previous = byId.get(task.id)
+    const stamp = (value) => new Date(value?.updatedAt || value?.createdAt || 0).getTime()
+    if (!previous || stamp(task) >= stamp(previous)) byId.set(task.id, task)
+  })
+  return [...byId.values()].sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0))
+}
 
 export const useTaskStore = create((set, get) => ({
   /* ------------------------------ état ------------------------------ */
@@ -48,6 +61,14 @@ export const useTaskStore = create((set, get) => ({
   assistant: { thinking: false },
   lastAction: null,
   toast: null,
+  cloud: {
+    connected: false,
+    email: null,
+    busy: false,
+    dirty: false,
+    error: null,
+    lastSync: null,
+  },
 
   /* --------------------------- hydratation --------------------------- */
   async hydrate() {
@@ -66,12 +87,94 @@ export const useTaskStore = create((set, get) => ({
       ready: true,
       storageBackend: storage.backend,
     })
+    queueMicrotask(() => get().initCloud())
   },
 
   persistSettings(patch) {
     const settings = { ...get().settings, ...patch }
     set({ settings })
     storage.put('settings', { id: SETTINGS_ID, ...settings })
+  },
+
+  /* ----------------------- synchronisation cloud ----------------------- */
+  async initCloud() {
+    const session = cloudSync.getSession()
+    if (!session) return
+    set({ cloud: { ...get().cloud, connected: true, email: session.email || null, busy: true, error: null } })
+    await get().pullCloud()
+  },
+
+  async signInCloud(email, password) {
+    set({ cloud: { ...get().cloud, busy: true, error: null } })
+    try {
+      const session = await cloudSync.signIn(email, password)
+      set({ cloud: { ...get().cloud, connected: true, email: session.email || email, busy: false, error: null } })
+      await get().pullCloud()
+      return true
+    } catch (error) {
+      set({ cloud: { ...get().cloud, busy: false, error: error.message } })
+      return false
+    }
+  },
+
+  async signUpCloud(email, password) {
+    set({ cloud: { ...get().cloud, busy: true, error: null } })
+    try {
+      const session = await cloudSync.signUp(email, password)
+      set({ cloud: { ...get().cloud, connected: true, email: session.email || email, busy: false, error: null } })
+      await get().pullCloud()
+      return true
+    } catch (error) {
+      set({ cloud: { ...get().cloud, busy: false, error: error.message } })
+      return false
+    }
+  },
+
+  async signOutCloud() {
+    await cloudSync.signOut()
+    if (cloudPushTimer) {
+      clearTimeout(cloudPushTimer)
+      cloudPushTimer = null
+    }
+    set({ cloud: { connected: false, email: null, busy: false, dirty: false, error: null, lastSync: null } })
+  },
+
+  async flushCloud() {
+    const cloud = get().cloud
+    if (!cloud.connected || cloud.busy) return
+    set({ cloud: { ...cloud, busy: true, error: null } })
+    try {
+      const at = await cloudSync.pushTasks(get().tasks)
+      set({ cloud: { ...get().cloud, busy: false, dirty: false, lastSync: at, error: null } })
+    } catch (error) {
+      set({ cloud: { ...get().cloud, busy: false, error: error.message } })
+    }
+  },
+
+  async pullCloud() {
+    const cloud = get().cloud
+    if (!cloud.connected) return
+    set({ cloud: { ...cloud, busy: true, error: null } })
+    try {
+      const row = await cloudSync.pullTasks()
+      if (!row) {
+        const at = await cloudSync.pushTasks(get().tasks)
+        set({ cloud: { ...get().cloud, busy: false, dirty: false, lastSync: at, error: null } })
+        return
+      }
+      const merged = mergeTasks(get().tasks, row.tasks)
+      set({ tasks: merged })
+      await storage.clear('tasks')
+      await storage.putMany('tasks', merged)
+      set({ cloud: { ...get().cloud, busy: false, dirty: false, lastSync: row.updated_at, error: null } })
+    } catch (error) {
+      set({ cloud: { ...get().cloud, busy: false, error: error.message } })
+    }
+  },
+
+  syncNow() {
+    if (!get().cloud.connected) return
+    return get().cloud.dirty ? get().flushCloud() : get().pullCloud()
   },
 
   /* ------------------------------ tâches ------------------------------ */
@@ -81,8 +184,16 @@ export const useTaskStore = create((set, get) => ({
   },
 
   async commitTasks(tasks) {
-    set({ tasks })
+    const cloud = get().cloud
+    set({ tasks, cloud: cloud.connected ? { ...cloud, dirty: true } : cloud })
     await storage.putMany('tasks', tasks)
+    if (cloud.connected) {
+      if (cloudPushTimer) clearTimeout(cloudPushTimer)
+      cloudPushTimer = setTimeout(() => {
+        cloudPushTimer = null
+        get().flushCloud()
+      }, 700)
+    }
   },
 
   async addTasks(drafts, meta = {}) {
@@ -201,9 +312,8 @@ export const useTaskStore = create((set, get) => ({
     const last = stack.pop()
     if (!last) return false
     const tasks = last.tasks
-    set({ tasks, undoStack: stack })
-    await storage.clear('tasks')
-    await storage.putMany('tasks', tasks)
+    set({ undoStack: stack })
+    await get().commitTasks(tasks)
     return true
   },
 
@@ -467,8 +577,8 @@ export const useTaskStore = create((set, get) => ({
 
   async clearAllTasks() {
     get().snapshot()
-    set({ tasks: [], activeTaskId: null })
-    await storage.clear('tasks')
+    await get().commitTasks([])
+    set({ activeTaskId: null })
   },
 
   async importTasks(list) {

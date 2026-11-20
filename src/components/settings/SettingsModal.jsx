@@ -30,10 +30,17 @@ export default function SettingsModal({
   taskCount,
   backend,
   onTestVoice,
+  cloud,
+  onCloudSignIn,
+  onCloudSignUp,
+  onCloudSignOut,
+  onCloudSyncNow,
 }) {
   const fileRef = useRef(null)
   const [confirmClear, setConfirmClear] = useState(false)
   const [aiStatus, setAiStatus] = useState(null)
+  const [cloudEmail, setCloudEmail] = useState('')
+  const [cloudPassword, setCloudPassword] = useState('')
   useEffect(() => {
     if (!open) return
     let active = true
@@ -275,9 +282,44 @@ export default function SettingsModal({
             <h3 style={{ margin: '0 0 4px', fontSize: 15, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 8 }}>
               <Database size={16} color="var(--accent-2)" /> Données
             </h3>
+            <div style={{ margin: '10px 0 14px', padding: 14, borderRadius: 14, border: '1px solid rgba(124,92,255,0.35)', background: 'rgba(124,92,255,0.08)' }}>
+              <strong style={{ fontSize: 13.5, display: 'flex', alignItems: 'center', gap: 7 }}>
+                <Database size={15} color="var(--accent-2)" /> Synchronisation entre appareils
+              </strong>
+              {cloud?.connected ? (
+                <>
+                  <p style={{ margin: '8px 0 10px', fontSize: 12.5, color: 'var(--text-muted)' }}>
+                    Connecté en tant que <b>{cloud.email}</b>.{' '}
+                    {cloud.lastSync ? `Dernière synchronisation : ${new Date(cloud.lastSync).toLocaleString('fr-FR')}.` : 'Première synchronisation…'}
+                  </p>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    <button type="button" className="btn btn-sm" disabled={cloud.busy} onClick={onCloudSyncNow}>
+                      {cloud.busy ? 'Synchronisation…' : 'Synchroniser maintenant'}
+                    </button>
+                    <button type="button" className="btn btn-sm btn-ghost" disabled={cloud.busy} onClick={onCloudSignOut}>Déconnecter</button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p style={{ margin: '8px 0 10px', fontSize: 12.5, color: 'var(--text-muted)' }}>
+                    Utilise le même compte sur ton téléphone et ton PC pour retrouver les mêmes tâches partout.
+                  </p>
+                  <div style={{ display: 'grid', gap: 8 }}>
+                    <input className="input" type="email" placeholder="ton@email.com" value={cloudEmail} onChange={(event) => setCloudEmail(event.target.value)} aria-label="Email de synchronisation" />
+                    <input className="input" type="password" placeholder="Mot de passe" value={cloudPassword} onChange={(event) => setCloudPassword(event.target.value)} aria-label="Mot de passe de synchronisation" />
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      <button type="button" className="btn btn-primary btn-sm" disabled={cloud?.busy || !cloudEmail || !cloudPassword} onClick={() => onCloudSignIn(cloudEmail, cloudPassword)}>Se connecter</button>
+                      <button type="button" className="btn btn-sm" disabled={cloud?.busy || !cloudEmail || !cloudPassword} onClick={() => onCloudSignUp(cloudEmail, cloudPassword)}>Créer un compte</button>
+                    </div>
+                  </div>
+                </>
+              )}
+              {cloud?.error && (
+                <p role="alert" style={{ margin: '10px 0 0', fontSize: 12.5, color: 'var(--danger)' }}>{cloud.error}</p>
+              )}
+            </div>
             <p style={{ margin: '0 0 14px', fontSize: 12.5, color: 'var(--text-dim)' }}>
-              Stockage 100 % local et gratuit ({backend === 'indexeddb' ? 'IndexedDB' : 'localStorage'}) : rien ne quitte ton appareil.
-              L’export JSON prépare la migration vers un service payant le jour où tu le veux.
+              Stockage local et gratuit ({backend === 'indexeddb' ? 'IndexedDB' : 'localStorage'}) conservé sur cet appareil. La synchronisation reste inactive tant que tu ne te connectes pas.
             </p>
 
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>

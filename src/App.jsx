@@ -35,6 +35,7 @@ export default function App() {
     toggleTask, togglePin, toggleSubtask, setView, setFilters, setActiveTask,
     restoreFromUndo, loadDemoData, clearAllTasks, importTasks, exportData,
     clearConversation, resetFilters,
+    cloud, signInCloud, signUpCloud, signOutCloud, syncNow,
   } = store
 
   const toaster = useToaster()
@@ -513,6 +514,11 @@ export default function App() {
         onClearTasks={() => clearAllTasks().then(() => toaster.push({ tone: 'warning', title: 'Toutes les tâches ont été effacées', action: { label: 'Annuler', onClick: () => restoreFromUndo() } }))}
         onClearConversation={() => { clearConversation(); toaster.push({ tone: 'info', title: 'Conversation vidée' }) }}
         onTestVoice={() => speak("Bonjour, je suis ton assistant de tâches. Je comprends le français naturel : dis-moi ce que tu dois faire, et je m'occupe du classement.")}
+        cloud={cloud}
+        onCloudSignIn={signInCloud}
+        onCloudSignUp={signUpCloud}
+        onCloudSignOut={signOutCloud}
+        onCloudSyncNow={syncNow}
       />
 
       <ShortcutsModal
