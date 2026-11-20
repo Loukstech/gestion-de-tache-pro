@@ -6,6 +6,7 @@
 import { filterTasks } from '../nlu/answers.js'
 import { interpret } from '../nlu/parser.js'
 import { CATEGORIES, PRIORITIES } from '../nlu/lexicon.js'
+import { aiUrl } from '../lib/ai-url.js'
 
 const MAX_STEPS = 6
 const CATEGORY_KEYS = Object.keys(CATEGORIES)
@@ -199,7 +200,7 @@ export async function runAgent(text, store) {
   for (let step = 0; step < MAX_STEPS; step += 1) {
     let response
     try {
-      response = await fetch('/api/ai/agent', {
+      response = await fetch(aiUrl('/api/ai/agent'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

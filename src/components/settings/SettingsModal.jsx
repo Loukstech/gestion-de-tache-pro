@@ -7,6 +7,7 @@ import { Switch, Segmented, Chip } from '../primitives/Bits.jsx'
 import { speechRecognitionSupported } from '../../hooks/useSpeechRecognition.js'
 import { speechSynthesisSupported, describeVoice, NATURAL_VOICE_PRESET } from '../../hooks/useSpeechSynthesis.js'
 import { CATEGORIES, CATEGORY_ORDER } from '../../nlu/lexicon.js'
+import { aiUrl } from '../../lib/ai-url.js'
 
 const ACCENTS = [
   { value: 'violet', label: 'Violet', color: '#7c5cff' },
@@ -44,7 +45,7 @@ export default function SettingsModal({
   useEffect(() => {
     if (!open) return
     let active = true
-    fetch('/api/ai/status').then((res) => res.ok ? res.json() : Promise.reject()).then((data) => {
+    fetch(aiUrl('/api/ai/status')).then((res) => res.ok ? res.json() : Promise.reject()).then((data) => {
       if (active) setAiStatus(data.configured ? 'configured' : 'missing')
     }).catch(() => { if (active) setAiStatus('missing') })
     return () => { active = false }

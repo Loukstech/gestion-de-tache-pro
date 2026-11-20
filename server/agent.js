@@ -221,7 +221,8 @@ export function agentMiddleware({ apiKey, apiKeys, model = 'gemini-flash-lite-la
         .filter(Boolean)
       let host
       try { host = new URL(origin).host } catch { return reply(403, { error: 'Origine non autorisée.' }) }
-      if (!hosts.includes(host) && !hosts.includes(host.split(':')[0])) return reply(403, { error: 'Origine non autorisée.' })
+      const sharedHost = /\.apps\.workbuddy\.host$/.test(host)
+      if (!sharedHost && !hosts.includes(host) && !hosts.includes(host.split(':')[0])) return reply(403, { error: 'Origine non autorisée.' })
     }
     if (!keys.length) return reply(503, { error: 'Gemini non configuré.' })
     if (!/^application\/json(?:\s*;|$)/i.test(req.headers['content-type'] || '')) return reply(415, { error: 'JSON requis.' })

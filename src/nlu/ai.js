@@ -1,5 +1,6 @@
 import { interpret } from './parser.js'
 import { CATEGORIES, PRIORITIES } from './lexicon.js'
+import { aiUrl } from '../lib/ai-url.js'
 
 const ranges = ['today', 'tomorrow', 'week', 'next-week', 'month', 'overdue', 'someday', 'upcoming']
 const localTime = (date) => {
@@ -47,7 +48,7 @@ export function adaptAiResult(result, text, now, source = 'text') {
 }
 
 export async function interpretWithAi(text, { now = new Date(), source = 'text' } = {}) {
-  const response = await fetch('/api/ai/interpret', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text, now: localTime(now) }), signal: AbortSignal.timeout(18000) })
+  const response = await fetch(aiUrl('/api/ai/interpret'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text, now: localTime(now) }), signal: AbortSignal.timeout(18000) })
   if (!response.ok) throw new Error('Gemini indisponible')
   const data = await response.json()
   return adaptAiResult(data.result, text, now, source)
