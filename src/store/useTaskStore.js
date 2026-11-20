@@ -46,6 +46,17 @@ const mergeTasks = (local, remote) => {
   return [...byId.values()].sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0))
 }
 
+const CHAT_ANSWERS = {
+  greeting: () => ({ headline: 'Salut !', spoken: 'Bonjour ! Comment je peux t’aider aujourd’hui ?' }),
+  wellbeing: () => ({ headline: 'Je vais bien', spoken: 'Je vais très bien, merci ! Et toi, comment ça va ?' }),
+  thanks: () => ({ headline: 'Avec plaisir', spoken: 'Avec plaisir ! Je suis là si tu as besoin.' }),
+  comprehension: () => ({ headline: 'Oui', spoken: 'Oui, je te comprends parfaitement. Je ne crée pas de tâche pour ça.' }),
+  identity: () => ({ headline: 'TaskVox Pro', spoken: 'Je suis TaskVox Pro, ton gestionnaire de tâches vocal. Je peux créer, retrouver, modifier et supprimer tes tâches en français.' }),
+  time: (now) => ({ headline: 'Heure actuelle', spoken: `Il est ${now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}.` }),
+  date: (now) => ({ headline: 'Aujourd’hui', spoken: `Nous sommes le ${now.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}.` }),
+  generic: () => ({ headline: 'Je suis là', spoken: 'Oui, je te comprends. Je ne crée pas de tâche pour ça. Dis-moi une action à faire ou une question sur tes tâches.' }),
+}
+
 export const useTaskStore = create((set, get) => ({
   /* ------------------------------ état ------------------------------ */
   ready: false,
@@ -408,12 +419,12 @@ export const useTaskStore = create((set, get) => ({
     // et on ne propose même pas de transformer ça en tâche.
     if (interpretation.intent === 'unknown' && (interpretation.notice === 'conversation' || interpretation.notice === 'negation')) {
       const isNegation = interpretation.notice === 'negation'
+      const base = isNegation
+        ? { headline: 'D’accord', spoken: 'D’accord, je ne fais rien.' }
+        : (CHAT_ANSWERS[interpretation.chatKind] || CHAT_ANSWERS.generic)(now)
       const answer = {
         kind: 'chat',
-        headline: isNegation ? 'D’accord' : 'Je suis là',
-        spoken: isNegation
-          ? 'D’accord, je ne fais rien.'
-          : 'Oui, je te comprends. Je ne crée pas de tâche pour ça. Dis-moi une action à faire ou une question sur tes tâches.',
+        ...base,
         groups: [],
         stats: [],
         chips: [

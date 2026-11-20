@@ -334,6 +334,24 @@ for (const [phrase, expected] of [
   })
 }
 
+console.log('\n═══ 10. PETITES QUESTIONS ═══\n')
+
+for (const [phrase, expected] of [
+  ['Salut comment tu vas', 'wellbeing'],
+  ['Bonjour', 'greeting'],
+  ['Merci', 'thanks'],
+  ['Tu me comprends ?', 'comprehension'],
+  ['Qui es-tu ?', 'identity'],
+  ['Quelle heure est-il ?', 'time'],
+  ['On est quel jour ?', 'date'],
+]) {
+  check(`« ${phrase} » → réponse ${expected}`, () => {
+    const result = interpret(phrase, { now: NOW })
+    return assert(result.intent === 'unknown' && result.notice === 'conversation' && result.chatKind === expected,
+      `intent=${result.intent}, notice=${result.notice}, chatKind=${result.chatKind}`)
+  })
+}
+
 console.log(`\n${'═'.repeat(46)}`)
 console.log(`  Résultat : ${passed} réussis · ${failed} échoués`)
 console.log('═'.repeat(46))

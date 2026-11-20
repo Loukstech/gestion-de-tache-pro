@@ -111,6 +111,21 @@ const SMALL_TALK_GUARD = [
 
 const CONVERSATION_GUARDS = [...QUESTION_GUARD, ...SMALL_TALK_GUARD]
 
+const CHAT_KINDS = [
+  { kind: 'wellbeing', pattern: /^(?:(?:salut|bonjour|bonsoir|coucou|hello|hey)\s+)?comment\s+(?:tu|ça|ca)\s+vas?\b|^(?:ça|ca)\s+va\b/i },
+  { kind: 'greeting', pattern: /^(?:bonjour|bonsoir|salut|coucou|hello|hey)\b/i },
+  { kind: 'thanks', pattern: /^(?:merci|pardon|excuse(?:z|-moi)?)\b/i },
+  { kind: 'comprehension', pattern: /\b(?:tu|vous)\s+(?:me\s+|m'|te\s+|t'|nous\s+|vous\s+)?(?:comprends|comprend|entends|entend|écoutes|écoute)\b/i },
+  { kind: 'identity', pattern: /^(?:qui es[- ]?tu|tu es qui|c'est quoi taskvox|taskvox c'est quoi)\b/i },
+  { kind: 'time', pattern: /^(?:quelle heure est[- ]?il|il est quelle heure|on est quelle heure)\b/i },
+  { kind: 'date', pattern: /^(?:on est quel jour|quel jour on est|quelle date on est|on est quelle date)\b/i },
+]
+
+function detectChatKind(value) {
+  const raw = String(value || '').trim()
+  return CHAT_KINDS.find(({ pattern }) => pattern.test(raw) || pattern.test(fold(raw)))?.kind || 'generic'
+}
+
 function matchesConversation(value) {
   const raw = String(value || '')
   const foldedValue = fold(raw)
@@ -171,6 +186,7 @@ export function interpret(rawInput, options = {}) {
       confidence: 0,
       empty: true,
       notice: matchesConversation(rawText) ? 'conversation' : null,
+      chatKind: detectChatKind(rawText),
       now,
     }
   }
@@ -212,6 +228,7 @@ export function interpret(rawInput, options = {}) {
     groupBy: primary?.groupBy || null,
     scope: primary?.scope || [],
     notice: results.find((result) => result.notice)?.notice || null,
+    chatKind: results.find((result) => result.chatKind)?.chatKind || null,
     confidence: results.reduce((max, result) => Math.max(max, result.confidence || 0), 0),
     mentions: results.flatMap((result) => result.mentions || []),
   }
@@ -319,7 +336,7 @@ function interpretSegment(segment, now, options) {
     case 'undo': return { text, intent: 'undo', confidence: 0.9, tasks: [], filters: {} }
     default: {
       if (matchesConversation(text)) {
-        return { text, intent: 'unknown', confidence: 0.4, tasks: [], filters: {}, notice: 'conversation' }
+        return { text, intent: 'unknown', confidence: 0.4, tasks: [], filters: {}, notice: 'conversation', chatKind: detectChatKind(text) }
       }
       const creation = buildCreate(text, now, options, 0.6, true)
       if (creation.tasks.length && creation.tasks[0].title.length > 2) return { ...creation, implicit: true }
@@ -331,6 +348,8 @@ function interpretSegment(segment, now, options) {
 export function detectIntent(text, folded = fold(text)) {
   const creationHit = CREATION_HINTS.some((pattern) => pattern.test(folded) || pattern.test(text))
   const queryHit = QUERY_HINTS.filter((pattern) => pattern.test(folded) || pattern.test(text)).length
+  const directChat = detectChatKind(text)
+  if (directChat === 'identity' || directChat === 'time' || directChat === 'date') return 'unknown'
 
   for (const rule of INTENT_RULES) {
     if (!rule.patterns.some((pattern) => pattern.test(folded) || pattern.test(text))) continue
