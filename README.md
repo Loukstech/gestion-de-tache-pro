@@ -1,61 +1,53 @@
-# Gestion de tâches pro
+# TaskVox Pro
 
-Assistant vocal qui écoute, comprend et **classe tes tâches en raisonnant**. Mobile-first, synchro sur tous tes appareils via Supabase.
+Gestionnaire personnel de tâches en français, pilotable à la voix ou au clavier. Les tâches, les réglages et l'historique sont conservés dans le navigateur, sans compte ni clé API.
 
-## Ce que ça fait
+## Démarrer
 
-- Tu parles ou tu écris : « *Prépare le client vendredi, c'est urgent* ».
-- L'IA extrait le titre, la priorité, la catégorie, l'échéance, les sous-tâches et **explique son choix**.
-- Elle enregistre la tâche et te répond **à l'écrit et à l'oral**.
-- Même compte sur téléphone et PC → mêmes tâches partout.
-
-## Documentation
-
-| Document | Contenu |
-|---|---|
-| [`SUPABASE_SETUP.md`](SUPABASE_SETUP.md) | Configurer le projet, la base et la fonction IA |
-| [`USER_GUIDE.md`](USER_GUIDE.md) | Utiliser l'assistant, la voix, les filtres et l'installation |
-| [`ARCHITECTURE.md`](ARCHITECTURE.md) | Flux de données, choix techniques, sécurité, schéma |
-
-## Installer
-
-1. Suis [`SUPABASE_SETUP.md`](SUPABASE_SETUP.md) : créer le projet, exécuter le SQL, déployer la fonction IA.
-2. Publie ce dossier comme site statique (ou sers-le en `localhost` pour tester).
-3. Dans l'app : colle l'URL et la clé publique Supabase, crée un compte, c'est prêt.
+Prérequis : Node.js 20.19+ ou 22.12+ et npm.
 
 ```bash
-python3 -m http.server 8000
-# http://localhost:8000
+npm install
+npm run dev
 ```
 
-La PWA s'installe via le menu du navigateur (« Ajouter à l'écran d'accueil » / « Installer l'application »). HTTPS ou `localhost` requis.
+Ouvrir l'adresse affichée par Vite. Pour vérifier le moteur de compréhension et compiler l'application :
 
-## Structure
+```bash
+npm test
+npm run build
+npm run preview
+```
 
-| Fichier | Rôle |
-|---|---|
-| `index.html` | Écrans configuration / connexion / assistant / tâches |
-| `styles.css` | Mobile-first, navigation basse, thèmes clair/sombre |
-| `app.js` | Interface, boucle vocale, rendu des tâches |
-| `supabase.js` | Accès REST : auth, tâches, fonction IA |
-| `config.js` | URL et clé publique du projet (par appareil) |
-| `voice.js` | Micro → texte et texte → voix (API navigateur) |
-| `supabase/schema.sql` | Table `tasks` + sécurité par utilisateur |
-| `supabase/functions/classify-task/` | Fonction serveur : prompt structuré + Gemini |
-| `sw.js`, `manifest.webmanifest`, `icons/` | PWA installable et cache hors ligne |
+## Utilisation
 
-## Sécurité
+Autoriser le microphone dans un navigateur compatible avec la reconnaissance vocale Web Speech, puis utiliser le bouton micro. Par exemple :
 
-- La **clé Gemini** est uniquement dans les secrets Supabase, jamais dans le code ni sur GitHub.
-- La **clé anon** est publique par design ; la protection vient des règles RLS de la table.
-- Chaque utilisateur ne peut lire/modifier que ses propres tâches.
+- « Ajoute une tâche appeler le client demain à 15 heures, c'est urgent »
+- « Quelles sont mes tâches urgentes demain ? »
+- « Montre mes tâches de la semaine »
 
-## Limites
+Le champ texte reste disponible si le micro ou la reconnaissance vocale ne sont pas pris en charge. Vérifier et corriger les tâches créées : la compréhension française est basée sur des règles et peut se tromper. Les fonctions vocales dépendent du navigateur, d'une autorisation et d'un contexte sécurisé (HTTPS ou localhost). Selon le navigateur, la reconnaissance vocale peut envoyer l'audio à un service externe et nécessiter une connexion Internet ; elle n'est pas nécessairement traitée localement. La synthèse vocale dépend également des voix installées.
 
-- Micro : Chrome, Edge et Safari vont bien ; Firefox est peu compatible.
-- Mode hors ligne : les tâches déjà chargées restent lisibles ; l'IA et la synchro exigent le réseau.
-- Gemini `flash-lite` peut être saturé aux heures de pointe ; le code renvoie un message clair.
+Les données sont stockées dans IndexedDB, avec un repli sur localStorage. Elles restent liées au navigateur et à l'appareil : effacer les données du navigateur peut les supprimer. Utiliser l'export JSON dans les paramètres pour les sauvegarder et l'import pour les restaurer. Aucune synchronisation entre appareils n'est incluse.
 
-## Licence
+## Architecture et évolutions
 
-Apache-2.0
+- React et Vite pour l'interface, Zustand pour l'état.
+- `src/nlu/` : interprétation locale des commandes et réponses structurées ; `scripts/nlu-test.mjs` vérifie les principaux cas en français.
+- `src/lib/storage.js` : interface de persistance locale, remplaçable par un adaptateur distant.
+- `src/hooks/` : intégrations aux API vocales du navigateur.
+
+La solution de départ ne requiert aucun abonnement. Un backend de synchronisation ou un fournisseur d'IA peut être ajouté ultérieurement via ces points d'intégration ; leurs coûts, la confidentialité et l'authentification devront alors être évalués séparément.
+
+## Option : compréhension par Gemini
+
+L'IA est désactivée par défaut. Pour l'activer :
+
+1. Créer une clé Gemini dans [Google AI Studio](https://aistudio.google.com/apikey), en vérifiant les conditions, quotas et tarifs actuels de Google. Une offre gratuite peut être limitée ou indisponible selon le modèle ou le compte.
+2. Copier `.env.example` en `.env.local`, puis renseigner `GEMINI_API_KEY` dans ce fichier **sur la machine qui exécute le serveur**. Ne jamais partager la clé dans une conversation, ni la placer dans une variable `VITE_` ou un fichier versionné.
+3. Redémarrer `npm run dev` (ou `npm run build` puis `npm run preview`) pour charger la clé, ouvrir **Réglages → IA** et activer Gemini.
+
+L'interface et les requêtes passent par le même serveur Vite : `/api/ai/interpret` appelle Gemini côté serveur et la clé n'est pas envoyée au navigateur. Seules la phrase et la date locale sont envoyées à Google ; la liste des tâches reste dans le navigateur. Des données personnelles peuvent cependant figurer dans la phrase : consulter les conditions de confidentialité de Google avant activation. Le moteur local prend le relais en cas d'erreur et affiche un avertissement. Les modifications et suppressions restent gérées par le moteur local. Les résultats de l'IA doivent être vérifiés.
+
+**Important :** le serveur Vite et cet adaptateur sont conçus pour les tests personnels, pas pour une exposition publique : il n'y a ni authentification utilisateur, ni limitation de débit. Ne déployez pas une clé sur un serveur public sans backend de production sécurisé, authentification, quotas et protection contre les abus. L'accès réseau à `generativelanguage.googleapis.com` est nécessaire. Un hébergement statique seul ne fournit pas l'API. Dans certains environnements d'aperçu, les connexions sortantes vers Google peuvent être bloquées ; la configuration de la clé seule ne garantit pas la connexion.

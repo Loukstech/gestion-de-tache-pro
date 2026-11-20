@@ -1,0 +1,281 @@
+/**
+ * Vocabulaire métier : catégories, priorités et dictionnaires de mots-clés.
+ * C'est ce qui permet à TaskVox de « classer de façon pro » sans aucun service payant.
+ */
+
+export const CATEGORIES = {
+  travail: {
+    id: 'travail',
+    label: 'Travail',
+    icon: 'Briefcase',
+    color: '#7c5cff',
+    keywords: [
+      'réunions', 'clients', 'dossiers', 'projets', 'présentations', 'mails', 'rapports', 'équipes', 'comptes rendus',
+      'travail', 'boulot', 'job', 'boss', 'bureau', 'reunion', 'client', 'dossier',
+      'projet', 'livrable', 'presentation', 'diapo', 'slide', 'mail', 'email',
+      'courriel', 'rapport', 'compte rendu', 'compte-rendu', 'brief', 'sprint',
+      'deadline', 'echeance', 'equipe', 'collaborateur', 'manager', 'patron',
+      'entretien', 'contrat', 'devis', 'facture client', 'proposition', 'roadmap',
+      'review', 'point equipe', 'n+1', 'rh', 'ressources humaines', 'onboarding',
+      'kpi', 'budget previsionnel', 'appel client', 'zoom', 'teams', 'slack',
+    ],
+  },
+  perso: {
+    id: 'perso',
+    label: 'Personnel',
+    icon: 'User',
+    color: '#f472b6',
+    keywords: [
+      'cadeaux', 'sorties', 'vacances', 'réservations',
+      'perso', 'personnel', 'loisir', 'sortie', 'ami', 'copain', 'anniversaire',
+      'cadeau', 'vacances', 'voyage', 'hotel', 'reservation', 'coiffeur', 'coiffure', 'chez le coiffeur',
+      'barbe', 'spa', 'massage', 'lecture', 'lire', 'film', 'serie', 'concert',
+      'expo', 'musee', 'restaurant', 'resto', 'diner', 'dejeuner', 'soiree', 'fete',
+      'hobby', 'guitare', 'piano', 'dessin', 'photo', 'jardin', 'jardinage',
+    ],
+  },
+  sante: {
+    id: 'sante',
+    label: 'Santé',
+    icon: 'HeartPulse',
+    color: '#34d399',
+    keywords: [
+      'médicaments', 'ordonnances', 'vaccins', 'analyses', 'séances', 'consultations', 'entraînements',
+      'acheter des medicaments', 'acheter des medicaments a la pharmacie', 'sante', 'medecin', 'docteur', 'dentiste', 'rendez-vous medical', 'pharmacie',
+      'medicament', 'traitement', 'ordonnance', 'vaccin', 'prise de sang', 'analyse',
+      'radio', 'scanner', 'irm', 'kiné', 'kine', 'osteopathe', 'ophtalmo', 'dermato',
+      'cardiologue', 'generaliste', 'specialiste', 'hopital', 'clinique', 'sport',
+      'gym', 'musculation', 'running', 'course a pied', 'yoga', 'fitness', 'seance',
+      'entrainement', 'match', 'foot', 'basket', 'natation', 'velo',
+      'marche a pied', 'dormir', 'sommeil', 'sieste', 'meditation', 'therapeute', 'psy', 'bilan de sante',
+    ],
+  },
+  courses: {
+    id: 'courses',
+    label: 'Courses',
+    icon: 'ShoppingCart',
+    color: '#fbbf24',
+    keywords: [
+      'achats', 'livraisons', 'provisions', 'fruits', 'légumes', 'yaourts', 'biscuits',
+      'courses', 'marche', 'supermarche', 'superette', 'magasin', 'acheter', 'achat',
+      'commander', 'livraison', 'colis', 'amazon', 'pain', 'boulangerie', 'lait',
+      'oeufs', 'fruits', 'legumes', 'viande', 'poisson', 'riz', 'pates', 'cafe',
+      'the', 'sucre', 'sel', 'huile', 'eau', 'jus', 'yaourt', 'fromage', 'beurre',
+      'chocolat', 'biscuits', 'lessive', 'produit', 'provision', 'stock', 'ravitaillement',
+      'epicerie', 'boucherie', 'primeur', 'carrefour', 'uch', 'lidl', 'aldi', 'intermarche',
+    ],
+  },
+  maison: {
+    id: 'maison',
+    label: 'Maison',
+    icon: 'Home',
+    color: '#60a5fa',
+    keywords: [
+      'poubelles', 'sortir les poubelles', 'descendre les poubelles', 'vitres', 'courses maison', 'électroménager',
+      'maison', 'appartement', 'appart', 'logement', 'menage', 'nettoyage', 'nettoyer',
+      'ranger', 'lavage', 'lessive', 'linge', 'repasser', 'vaisselle', 'cuisine',
+      'cuisiner', 'repas', 'plat', 'recette', 'poussiere', 'aspirateur', 'carreaux',
+      'vitres', 'salle de bain', 'toilettes', 'wc', 'jardin', 'pelouse', 'garage',
+      'bricolage', 'reparation', 'reparer', 'peinture', 'peindre', 'ampoule', 'plomberie',
+      'fuite', 'electricite', 'meuble', 'montage', 'demenagement', 'cartons', 'poubelle',
+      'tri', 'voisin', 'syndic', 'proprietaire', 'loyer', 'entretien maison',
+    ],
+  },
+  finance: {
+    id: 'finance',
+    label: 'Finance',
+    icon: 'Wallet',
+    color: '#a3e635',
+    keywords: [
+      'factures', 'impôts', 'virements', 'paiements', 'banques', 'assurances', 'abonnements', 'échéances', 'dépenses',
+      'finance', 'banque', 'bancaire', 'virement', 'paiement', 'payer', 'facture',
+      'impots', 'impot', 'taxe', 'declaration', 'compte', 'carte bancaire', 'credit',
+      'pret', 'epargne', 'investissement', 'bourse', 'assurance', 'mutuelle', 'salaire',
+      'bulletin', 'fiche de paie', 'tresorerie', 'budget', 'depense', 'remboursement',
+      'echeance fiscale', 'caf', 'securite sociale', 'ameli', 'prelevement', 'abonnement a payer',
+      'regulariser', 'solde', 'releve', 'rib', 'cheque', 'especes', 'argent',
+    ],
+  },
+  etudes: {
+    id: 'etudes',
+    label: 'Études',
+    icon: 'GraduationCap',
+    color: '#c084fc',
+    keywords: [
+      'examens', 'devoirs', 'révisions', 'formations', 'exercices', 'exposés',
+      'etudes', 'etudier', 'cours', 'examen', 'partiel', 'controle', 'devoir',
+      'memoire', 'these', 'revision', 'reviser', 'apprendre', 'universite', 'fac',
+      'ecole', 'lycee', 'college', 'prof', 'professeur', 'enseignant', 'formation',
+      'certification', 'diplome', 'bibliotheque', 'bu', 'exercice', 'td', 'tp',
+      'expose', 'dissertation', 'qcm', 'concours', 'inscription', 'scolarite',
+      'etudiant', 'maitre de stage', 'stage', 'alternance', 'soutenance', 'note',
+    ],
+  },
+  famille: {
+    id: 'famille',
+    label: 'Famille',
+    icon: 'Users',
+    color: '#fb923c',
+    keywords: [
+      'anniversaires', 'grands-parents',
+      'famille', 'familial', 'parents', 'pere', 'papa', 'mere', 'maman', 'frere',
+      'soeur', 'enfant', 'enfants', 'fils', 'fille', 'bebe', 'nounou', 'creche',
+      'ecole des enfants', 'grand-mere', 'grand-mere', 'grand pere', 'papi', 'mamie',
+      'oncle', 'tante', 'cousin', 'cousine', 'neveu', 'mariage', 'bapteme',
+      'commun', 'garde', 'week-end chez', 'appelle maman', 'appelle papa', 'fete des meres',
+      'fete des peres', 'noel en famille', 'anniversaire de', 'belles-soeurs', 'gendre',
+    ],
+  },
+  transport: {
+    id: 'transport',
+    label: 'Transport',
+    icon: 'Car',
+    color: '#22d3ee',
+    keywords: [
+      'billets', 'voitures', 'trajets', 'amendes', 'contrôles techniques',
+      'transport', 'voiture', 'auto', 'vehicule', 'essence', 'carburant', 'plein',
+      'garage auto', 'mecanicien', 'revision voiture', 'controle technique', 'assurance auto',
+      'amende', 'stationnement', 'parking', 'train', 'sncf', 'billet de train', 'avion',
+      'vol', 'aeroport', 'embarquement', 'bus', 'tram', 'metro', 'taxi', 'vtc',
+      'uber', 'covoiturage', 'blablacar', 'velo', 'trottinette', 'permis', 'conduite',
+      'trajet', 'depart', 'retour', 'navette', 'peage', 'vignette',
+    ],
+  },
+  admin: {
+    id: 'admin',
+    label: 'Administratif',
+    icon: 'FileText',
+    color: '#94a3b8',
+    keywords: [
+      'documents', 'formulaires', 'papiers', 'attestations', 'justificatifs', 'certificats', 'courriers', 'dossiers administratifs', 'déclarations',
+      'administratif', 'admin', 'papier', 'papiers', 'document', 'documents', 'formulaire',
+      'dossier administratif', 'carte d identite', 'cni', 'passeport', 'visa', 'titre de sejour',
+      'permis de conduire', 'carte vitale', 'numero de securite sociale', 'caf', 'pole emploi',
+      'france travail', 'la préfecture', 'prefecture', 'la mairie', 'mairie', 'etat civil', 'acte de naissance', 'extrait',
+      'declaration d impots', 'impots gouv', 'ameli', 'cpam', 'retraite', 'allocations',
+      'apostille', 'legalisation', 'notaire', 'huissier', 'avocat', 'justice', 'tribunal',
+      'convocation', 'recensement', 'jdc', 'election', 'procuration', 'inscription consulaire',
+      'ambassade', 'consulat', 'cnib', 'acte', 'certificat', 'attestation', 'justificatif',
+      'domicile', 'edf', 'eau', 'internet', 'operateur', 'resiliation', 'abonnement',
+    ],
+  },
+  loisir: {
+    id: 'loisir',
+    label: 'Loisirs',
+    icon: 'Gamepad2',
+    color: '#f87171',
+    keywords: [
+      'jeux', 'films', 'séries', 'livres', 'podcasts', 'sorties', 'concerts',
+      'loisir', 'loisirs', 'detente', 'jeu', 'jeux', 'jeux video', 'console', 'playstation',
+      'xbox', 'switch', 'pc gaming', 'stream', 'twitch', 'youtube', 'podcast', 'video',
+      'musique', 'playlist', 'instrument', 'chant', 'danse', 'theatre', 'cinema',
+      'netflix', 'canal+', 'documentaire', 'anime', 'manga', 'bd', 'roman', 'peche',
+      'chasse', 'camping', 'rando', 'randonnee', 'plage', 'piscine', 'parc', 'balade',
+      'bar', 'club', 'karaoké', 'bowling', 'escape game',
+    ],
+  },
+  rdv: {
+    id: 'rdv',
+    label: 'Rendez-vous',
+    icon: 'CalendarClock',
+    color: '#e879f9',
+    keywords: [
+      'rendez-vous', 'rdvs', 'créneaux', 'visios', 'entretiens',
+      'rdv', 'rendez-vous', 'rendez vous', 'meeting', 'point', 'creneau', 'appointment',
+      'convocation', 'entrevue', 'consultation', 'seance', 'audience', 'entretien d embauche',
+      'visio', 'visioconference', 'conference', 'appel telephonique', 'coup de fil',
+      'call', 'demo', 'demonstration', 'soutenance', 'jury', 'signature', 'rendez vous bancaire',
+    ],
+  },
+  divers: {
+    id: 'divers',
+    label: 'Divers',
+    icon: 'Sparkles',
+    color: '#64748b',
+    keywords: [],
+  },
+}
+
+export const CATEGORY_ORDER = [
+  'travail', 'perso', 'sante', 'courses', 'maison', 'finance',
+  'etudes', 'famille', 'transport', 'admin', 'rdv', 'loisir', 'divers',
+]
+
+export const PRIORITIES = {
+  critical: {
+    id: 'critical',
+    label: 'Critique',
+    short: 'P1',
+    color: '#ef4444',
+    rank: 4,
+    keywords: [
+      'critique', 'urgentissime', 'extremement urgent', 'tres tres urgent', 'immediat',
+      'immediatement', 'tout de suite', 'des maintenant', 'maintenant', 'asap',
+      'urgence absolue', 'vital', 'bloquant', 'stoppe tout', 'priorite absolue',
+      'au plus vite', 'seance tenante', 'sans attendre', 'urgent urgent',
+    ],
+  },
+  high: {
+    id: 'high',
+    label: 'Haute',
+    short: 'P2',
+    color: '#f97316',
+    rank: 3,
+    keywords: [
+      'urgent', 'urgente', 'urgentissime', 'important', 'importante', 'prioritaire',
+      'priorite haute', 'haute priorite', 'priorite', 'pressant', 'presse', 'rapidement',
+      'vite', 'aujourdhui meme', 'sans faute', 'imperatif', 'majeur', 'capital',
+      'essentiel', 'ne pas oublier', 'a ne pas rater', 'top priorite',
+    ],
+  },
+  low: {
+    id: 'low',
+    label: 'Basse',
+    short: 'P4',
+    color: '#38bdf8',
+    rank: 1,
+    keywords: [
+      'pas urgent', 'pas urgente', 'peu important', 'basse priorite', 'priorite basse',
+      'quand tu peux', 'quand j ai le temps', 'si possible', 'optionnel', 'facultatif',
+      'plus tard', 'un jour', 'eventuellement', 'pas presse', 'detendu', 'tranquille',
+      'sans urgence', 'secondaire', 'accessoire', 'bonus',
+    ],
+  },
+  medium: {
+    id: 'medium',
+    label: 'Normale',
+    short: 'P3',
+    color: '#a78bfa',
+    rank: 2,
+    keywords: ['priorite normale', 'priorite moyenne', 'normal', 'moyenne'],
+  },
+}
+
+export const PRIORITY_ORDER = ['critical', 'high', 'medium', 'low']
+
+/** Motifs de récurrence exprimés à l'oral. */
+export const RECURRENCE_PATTERNS = [
+  { pattern: /\b(tous les jours|chaque jour|quotidiennement|tous les jours ouvrables)\b/i, rrule: 'daily', label: 'Tous les jours' },
+  { pattern: /\b(toutes les semaines|chaque semaine|hebdomadaire|hebdo)\b/i, rrule: 'weekly', label: 'Chaque semaine' },
+  { pattern: /\b(tous les mois|chaque mois|mensuellement|mensuel)\b/i, rrule: 'monthly', label: 'Chaque mois' },
+  { pattern: /\b(tous les ans|chaque annee|chaque an|annuellement|annuel)\b/i, rrule: 'yearly', label: 'Chaque année' },
+  { pattern: /\b(tous les (\d+) jours|chaque (\d+) jours)\b/i, rrule: 'interval', label: 'Intervalle de jours' },
+  { pattern: /\b(tous les (lundis?|mardis?|mercredis?|jeudis?|vendredis?|samedis?|dimanches?))\b/i, rrule: 'weekly-day', label: 'Hebdomadaire (jour fixe)' },
+  { pattern: /\b(les jours ouvrables|jours ouvrés|du lundi au vendredi)\b/i, rrule: 'workdays', label: 'Jours ouvrés' },
+]
+
+/** Tags fréquents repérés automatiquement (en plus des #hashtag explicites). */
+export const AUTO_TAGS = {
+  appel: ['appeler', 'appel', 'telephone', 'coup de fil', 'call', 'joindre'],
+  email: ['mail', 'email', 'e-mail', 'courriel', 'repondre au mail', 'envoyer un mail'],
+  reunion: ['reunion', 'meeting', 'visio', 'point equipe', 'brief'],
+  achat: ['acheter', 'commander', 'achat', 'livraison'],
+  paiement: ['payer', 'paiement', 'facture', 'virement', 'regler'],
+  document: ['document', 'dossier', 'rapport', 'compte rendu', 'contrat', 'attestation'],
+  sante: ['medecin', 'dentiste', 'pharmacie', 'sport', 'gym'],
+  famille: ['maman', 'papa', 'enfant', 'frere', 'soeur', 'parents'],
+  client: ['client', 'prospects', 'compte client'],
+  urgent: ['urgent', 'urgence', 'asap'],
+  idee: ['idee', 'penser a', 'y penser', 'noter'],
+  attente: ['attendre', 'relancer', 'suivi', 'reponse de'],
+}

@@ -1,171 +1,18 @@
 <!doctype html>
 <html lang="fr">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="description" content="Assistant vocal qui classe tes tâches. Mobile-first, synchro sur tous tes appareils.">
-  <meta name="theme-color" content="#0f172a">
-  <link rel="manifest" href="manifest.webmanifest">
-  <link rel="icon" href="icons/icon-192.png" type="image/png">
-  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="stylesheet" href="styles.css">
-  <title>Tâches pro — Assistant vocal</title>
-</head>
-<body>
-
-  <!-- SETUP -->
-  <section id="setup-screen" class="auth-screen" hidden>
-    <div class="auth-card">
-      <div class="empty-mark" aria-hidden="true">✓</div>
-      <h1>Configuration</h1>
-      <p>Colle les informations de ton projet Supabase (une seule fois par appareil).</p>
-      <form id="setup-form">
-        <label>URL du projet
-          <input id="setup-url" type="url" required placeholder="https://xxxx.supabase.co" autocomplete="url">
-        </label>
-        <label>Clé publique (anon key)
-          <textarea id="setup-key" rows="3" required placeholder="eyJhbGciOi…"></textarea>
-        </label>
-        <button class="primary-btn wide" type="submit">Continuer</button>
-      </form>
-      <p class="fine">La clé publique est sans danger : c'est la sécurité de la base (RLS) qui protège tes données. Ta clé Gemini reste sur le serveur.</p>
-    </div>
-  </section>
-
-  <!-- AUTH -->
-  <section id="auth-screen" class="auth-screen" hidden>
-    <div class="auth-card">
-      <div class="empty-mark" aria-hidden="true">✓</div>
-      <h1>Tâches pro</h1>
-      <p id="auth-subtitle">Connecte-toi pour retrouver tes tâches sur tous tes appareils.</p>
-      <form id="auth-form">
-        <label>Email
-          <input id="auth-email" type="email" required autocomplete="email">
-        </label>
-        <label>Mot de passe
-          <input id="auth-password" type="password" required minlength="6" autocomplete="current-password">
-        </label>
-        <button class="primary-btn wide" id="auth-submit" type="submit">Se connecter</button>
-      </form>
-      <button id="auth-toggle" class="text-btn" type="button">Créer un compte</button>
-      <button id="auth-reset" class="text-btn" type="button">Configurer un autre projet</button>
-    </div>
-  </section>
-
-  <!-- MAIN APP -->
-  <div class="app" id="main-app" hidden>
-    <header class="topbar">
-      <div class="brand">
-        <span class="brand-mark" aria-hidden="true">✓</span>
-        <div>
-          <h1>Tâches pro</h1>
-          <p class="brand-sub" id="user-label">Assistant vocal</p>
-        </div>
-      </div>
-      <div class="topbar-actions">
-        <button id="theme-toggle" class="icon-btn" type="button" aria-label="Changer de thème">◐</button>
-        <button id="install-btn" class="install-btn" type="button" hidden>Installer</button>
-        <button id="logout-btn" class="icon-btn" type="button" aria-label="Se déconnecter" title="Se déconnecter">↪</button>
-      </div>
-    </header>
-
-    <main class="layout">
-      <aside class="sidebar" aria-label="Filtres et statistiques">
-        <section class="panel stats-panel">
-          <h2>Aujourd'hui</h2>
-          <div class="stats">
-            <div class="stat"><strong id="stat-active">0</strong><span>à faire</span></div>
-            <div class="stat"><strong id="stat-done">0</strong><span>terminées</span></div>
-            <div class="stat"><strong id="stat-late">0</strong><span>en retard</span></div>
-          </div>
-        </section>
-        <section class="panel">
-          <h2>Priorité</h2>
-          <div id="priority-filters" class="filter-list" role="group"></div>
-        </section>
-        <section class="panel">
-          <h2>Catégories</h2>
-          <div id="category-filters" class="filter-list" role="group"></div>
-        </section>
-      </aside>
-
-      <section class="content" aria-label="Espace de travail">
-        <!-- ASSISTANT VIEW -->
-        <div id="view-assistant" class="view">
-          <div class="assistant-head">
-            <span class="status-dot" id="assistant-dot"></span>
-            <span id="assistant-status">Parle ou écris une tâche</span>
-          </div>
-          <div id="chat" class="chat" role="log" aria-live="polite">
-            <div class="msg msg-assistant">
-              <div class="msg-label">Assistant</div>
-              <div class="msg-bubble">Bonjour. Dis-moi ce que tu as à faire, je m'en occupe et je classe pour toi.</div>
-            </div>
-          </div>
-          <form id="assistant-form" class="assistant-compose">
-            <input id="assistant-input" type="text" placeholder="Ex. Préparer la réunion client vendredi…" aria-label="Message à l'assistant" autocomplete="off">
-            <button id="mic-btn" class="mic-btn" type="button" aria-label="Parler">●</button>
-            <button class="send-btn" type="submit" aria-label="Envoyer">↑</button>
-          </form>
-          <p class="compose-hint" id="compose-hint">Le micro fonctionne en Chrome, Edge et Safari. Réponse écrite et vocale.</p>
-        </div>
-
-        <!-- TASKS VIEW -->
-        <div id="view-tasks" class="view" hidden>
-          <div class="search-row">
-            <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 21l-4.35-4.35M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16z"/></svg>
-            <input id="search" type="search" placeholder="Rechercher une tâche…" aria-label="Rechercher" autocomplete="off">
-          </div>
-          <div class="mobile-filters" id="mobile-status-filters" role="group"></div>
-          <div class="list-head">
-            <h2 id="list-title">Toutes les tâches</h2>
-            <button id="clear-done" class="text-btn" type="button">Effacer les terminées</button>
-          </div>
-          <ul id="task-list" class="task-list"></ul>
-          <div id="empty-state" class="empty-state" hidden>
-            <div class="empty-mark" aria-hidden="true">✓</div>
-            <p id="empty-message">Aucune tâche pour le moment.</p>
-          </div>
-        </div>
-      </section>
-    </main>
-
-    <nav class="bottom-nav" id="bottom-nav" aria-label="Navigation">
-      <button id="tab-assistant" class="nav-item" type="button" aria-pressed="true"><span aria-hidden="true">◉</span> Assistant</button>
-      <button id="tab-tasks" class="nav-item" type="button" aria-pressed="false"><span aria-hidden="true">☰</span> Tâches</button>
-    </nav>
-  </div>
-
-  <dialog id="task-dialog" class="task-dialog">
-    <form id="task-form">
-      <div class="dialog-head">
-        <h2 id="dialog-title">Modifier la tâche</h2>
-        <button id="dialog-close" class="icon-btn" type="button" aria-label="Fermer">✕</button>
-      </div>
-      <label>Titre<input id="f-title" type="text" maxlength="160" required></label>
-      <label>Notes<textarea id="f-notes" rows="3" maxlength="2000"></textarea></label>
-      <div class="form-grid">
-        <label>Priorité
-          <select id="f-priority">
-            <option value="low">Basse</option><option value="medium">Moyenne</option><option value="high">Haute</option>
-          </select>
-        </label>
-        <label>Échéance<input id="f-due" type="date"></label>
-      </div>
-      <label>Catégorie<input id="f-category" type="text" maxlength="60" list="category-options"></label>
-      <datalist id="category-options"></datalist>
-      <div class="dialog-actions">
-        <button id="delete-task" class="danger-btn" type="button">Supprimer</button>
-        <span class="spacer"></span>
-        <button id="cancel-task" class="ghost-btn" type="button">Annuler</button>
-        <button class="primary-btn" type="submit">Enregistrer</button>
-      </div>
-    </form>
-  </dialog>
-
-  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
-  <script type="module" src="app.js"></script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#07080f" />
+    <meta
+      name="description"
+      content="TaskVox Pro — gestionnaire de tâches avancé piloté par la voix. Parlez, il crée, classe et retrouve vos tâches."
+    />
+    <title>TaskVox Pro · Gestion de tâches par la voix</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c5cff'/%3E%3Cstop offset='1' stop-color='%2322d3ee'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='8' fill='%2307080f'/%3E%3Cpath d='M9 16.5l4.5 4.5L23 11' stroke='url(%23g)' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>
