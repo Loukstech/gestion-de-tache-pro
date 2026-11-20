@@ -950,8 +950,9 @@ kbd {
 .setting-row .setting-title { font-weight: 650; font-size: 14px; }
 .setting-row .setting-desc { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
 
-.segmented { display: inline-flex; padding: 3px; gap: 3px; border-radius: var(--radius-pill); background: var(--surface-2); border: 1px solid var(--border); }
+.segmented { display: inline-flex; flex-wrap: wrap; max-width: 100%; padding: 3px; gap: 3px; border-radius: var(--radius-pill); background: var(--surface-2); border: 1px solid var(--border); }
 .segmented button {
+  flex: 0 0 auto; white-space: nowrap;
   border: 0; background: transparent; color: var(--text-muted);
   font: inherit; font-size: 12.5px; font-weight: 650;
   padding: 6px 13px; border-radius: var(--radius-pill); cursor: pointer;
