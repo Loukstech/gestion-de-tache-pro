@@ -209,9 +209,20 @@ export function agentMiddleware({ apiKey, apiKeys, model = 'gemini-flash-lite-la
 
     if (path !== '/api/ai/agent' || req.method !== 'POST') return reply(405, { error: 'Méthode non autorisée.' })
     const origin = req.headers.origin
-    try {
-      if (!origin || new URL(origin).host !== req.headers.host) return reply(403, { error: 'Origine non autorisée.' })
-    } catch { return reply(403, { error: 'Origine non autorisée.' }) }
+    const fetchSite = req.headers['sec-fetch-site']
+    if (fetchSite && !['same-origin', 'none'].includes(fetchSite)) return reply(403, { error: 'Origine non autorisée.' })
+    // Certains proxys de partage suppriment l'en-tête Origin. On ne rejette
+    // donc que les origines explicitement étrangères ; une origine absente
+    // reste acceptable pour les requêtes servies derrière ces proxys.
+    if (origin) {
+      const hosts = [req.headers.host, req.headers['x-forwarded-host']]
+        .filter(Boolean)
+        .flatMap((value) => String(value).split(',').map((part) => part.trim().split(':')[0]))
+        .filter(Boolean)
+      let host
+      try { host = new URL(origin).host } catch { return reply(403, { error: 'Origine non autorisée.' }) }
+      if (!hosts.includes(host) && !hosts.includes(host.split(':')[0])) return reply(403, { error: 'Origine non autorisée.' })
+    }
     if (!keys.length) return reply(503, { error: 'Gemini non configuré.' })
     if (!/^application\/json(?:\s*;|$)/i.test(req.headers['content-type'] || '')) return reply(415, { error: 'JSON requis.' })
 

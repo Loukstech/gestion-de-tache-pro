@@ -17,11 +17,21 @@ export function geminiMiddleware({ apiKey, apiKeys, model = 'gemini-flash-lite-l
     const reply = (status, body) => { res.statusCode = status; res.end(JSON.stringify(body)) }
     if (path === '/api/ai/status' && req.method === 'GET') return reply(200, { configured: keys.length > 0, keyCount: keys.length })
     if (path !== '/api/ai/interpret' || req.method !== 'POST') return reply(405, { error: 'Méthode non autorisée.' })
-    // Only same-origin browser requests may consume the configured key.
+    // Only explicit foreign origins are rejected: some sharing proxies strip
+    // the Origin header, and those requests must still work. Browsers also
+    // send Sec-Fetch-Site, which lets us block cross-site calls.
     const origin = req.headers.origin
-    try {
-      if (!origin || new URL(origin).host !== req.headers.host) return reply(403, { error: 'Origine non autorisée.' })
-    } catch { return reply(403, { error: 'Origine non autorisée.' }) }
+    const fetchSite = req.headers['sec-fetch-site']
+    if (fetchSite && !['same-origin', 'none'].includes(fetchSite)) return reply(403, { error: 'Origine non autorisée.' })
+    if (origin) {
+      const hosts = [req.headers.host, req.headers['x-forwarded-host']]
+        .filter(Boolean)
+        .flatMap((value) => String(value).split(',').map((part) => part.trim().split(':')[0]))
+        .filter(Boolean)
+      let host
+      try { host = new URL(origin).host } catch { return reply(403, { error: 'Origine non autorisée.' }) }
+      if (!hosts.includes(host) && !hosts.includes(host.split(':')[0])) return reply(403, { error: 'Origine non autorisée.' })
+    }
     if (!keys.length) return reply(503, { error: 'Gemini non configuré.' })
     if (!/^application\/json(?:\s*;|$)/i.test(req.headers['content-type'] || '')) return reply(415, { error: 'JSON requis.' })
     let chunks = '', size = 0
