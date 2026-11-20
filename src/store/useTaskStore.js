@@ -3,6 +3,7 @@ import { storage, SETTINGS_ID } from '../lib/storage.js'
 import * as cloudSync from '../lib/sync.js'
 import { interpret } from '../nlu/parser.js'
 import { interpretWithAi } from '../nlu/ai.js'
+import { runAgent } from '../agent/runAgent.js'
 import { buildAnswer, filterTasks, sortTasks, matchesRange } from '../nlu/answers.js'
 import { nextOccurrence, fromISODate, toISODate } from '../nlu/dates.js'
 import { CATEGORIES } from '../nlu/lexicon.js'
@@ -12,6 +13,7 @@ import { seedDemoTasks } from '../data/demo.js'
 const DEFAULT_SETTINGS = {
   language: 'fr-FR',
   aiEnabled: false,
+  agentMode: true,
   voiceReply: true,
   rate: 0.98,
   pitch: 1,
@@ -394,6 +396,22 @@ export const useTaskStore = create((set, get) => ({
         const result = await executeConfirmed(pending, set, get, now, meta)
         set({ assistant: { thinking: false } })
         return result
+      }
+    }
+
+    // Mode agent : le modèle raisonne avec l'historique et les tâches, appelle
+    // des outils validés, puis répond. Repli silencieux sur le moteur local si
+    // le service IA n'est pas disponible (clé absente, hébergement statique…).
+    if (get().settings.agentMode !== false) {
+      try {
+        const agent = await runAgent(text, { get, set })
+        if (agent) {
+          get().pushMessage({ role: 'assistant', text: agent.answer.spoken, answer: agent.answer })
+          set({ assistant: { thinking: false } })
+          return agent
+        }
+      } catch {
+        // Repli sur le moteur local.
       }
     }
 

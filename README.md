@@ -40,14 +40,13 @@ Les données sont stockées dans IndexedDB, avec un repli sur localStorage. Elle
 
 La solution de départ ne requiert aucun abonnement. Un backend de synchronisation ou un fournisseur d'IA peut être ajouté ultérieurement via ces points d'intégration ; leurs coûts, la confidentialité et l'authentification devront alors être évalués séparément.
 
-## Option : compréhension par Gemini
+## Mode agent (IA)
 
-L'IA est désactivée par défaut. Pour l'activer :
+L'agent est activé par défaut dans **Réglages → IA**. Il reçoit ta phrase, les derniers messages et un résumé des tâches, raisonne côté serveur via Gemini, appelle les outils nécessaires (créer, lister, modifier, terminer, rouvrir, supprimer après confirmation, filtrer, naviguer, annuler), vérifie leurs résultats puis te répond en français. Il gère les références contextuelles (« termine-la ») et demande confirmation avant toute suppression.
 
-1. Créer une clé Gemini dans [Google AI Studio](https://aistudio.google.com/apikey), en vérifiant les conditions, quotas et tarifs actuels de Google. Une offre gratuite peut être limitée ou indisponible selon le modèle ou le compte.
-2. Copier `.env.example` en `.env.local`, puis renseigner `GEMINI_API_KEY` dans ce fichier **sur la machine qui exécute le serveur**. Ne jamais partager la clé dans une conversation, ni la placer dans une variable `VITE_` ou un fichier versionné.
-3. Redémarrer `npm run dev` (ou `npm run build` puis `npm run preview`) pour charger la clé, ouvrir **Réglages → IA** et activer Gemini.
+1. Crée une clé Gemini dans [Google AI Studio](https://aistudio.google.com/apikey), en vérifiant les conditions, quotas et tarifs actuels de Google.
+2. Copie `.env.example` en `.env.local` et renseigne `GEMINI_API_KEYS` (plusieurs clés possibles, séparées par des virgules, avec bascule automatique). `GEMINI_API_KEY` reste accepté. Ne jamais partager la clé dans une conversation ni la placer dans une variable `VITE_` ou un fichier versionné.
+3. Redémarre `npm run dev` (ou `npm run build` puis `npm run preview`, ou `npm start` en production) pour charger la clé. **Réglages → IA** indique si elle est détectée.
+4. Le mode agent envoie la phrase, l'historique et un résumé des tâches à Google ; la clé reste sur le serveur. Sans clé, sur un hébergement statique ou en cas d'erreur, l'application repasse automatiquement sur le moteur local sans interrompre l'utilisation. Le mode « compréhension simple » reste disponible comme repli.
 
-L'interface et les requêtes passent par le même serveur Vite : `/api/ai/interpret` appelle Gemini côté serveur et la clé n'est pas envoyée au navigateur. Seules la phrase et la date locale sont envoyées à Google ; la liste des tâches reste dans le navigateur. Des données personnelles peuvent cependant figurer dans la phrase : consulter les conditions de confidentialité de Google avant activation. Le moteur local prend le relais en cas d'erreur et affiche un avertissement. Les modifications et suppressions restent gérées par le moteur local. Les résultats de l'IA doivent être vérifiés.
-
-**Important :** le serveur Vite et cet adaptateur sont conçus pour les tests personnels, pas pour une exposition publique : il n'y a ni authentification utilisateur, ni limitation de débit. Ne déployez pas une clé sur un serveur public sans backend de production sécurisé, authentification, quotas et protection contre les abus. L'accès réseau à `generativelanguage.googleapis.com` est nécessaire. Un hébergement statique seul ne fournit pas l'API. Dans certains environnements d'aperçu, les connexions sortantes vers Google peuvent être bloquées ; la configuration de la clé seule ne garantit pas la connexion.
+**Important :** `/api/ai/agent` est fourni par le middleware Vite (`dev`, `preview`, `npm start`). Un hébergement purement statique ne fournit pas cet endpoint : déploie l'application comme service Node (avec `PORT`) pour activer l'agent. Le middleware contrôle l'origine des requêtes, mais ne comporte ni authentification utilisateur ni limitation de débit : il est prévu pour un usage personnel, pas une exposition publique. La reconnaissance vocale peut envoyer l'audio à un service externe selon le navigateur ; consulte les conditions de confidentialité Google avant d'activer l'agent.

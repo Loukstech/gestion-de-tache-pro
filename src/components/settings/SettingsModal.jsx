@@ -197,14 +197,14 @@ export default function SettingsModal({
 
         {(tab) => tab === 'ia' && (
           <section className="card" style={{ padding: 16 }}>
-            <h3 style={{ margin: '0 0 8px' }}>Compréhension avec Gemini</h3>
+            <h3 style={{ margin: '0 0 8px' }}>Agent IA</h3>
             <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>
-              Quand cette option est activée, ta phrase et la date locale sont envoyées à Google pour interprétation.
-              La liste de tes tâches reste dans ton navigateur. Vérifie les résultats : l’IA peut se tromper.
+              L'agent écoute, raisonne avec l'historique et l'état de tes tâches, puis exécute les actions nécessaires (créer, retrouver, modifier, terminer, supprimer après confirmation) avant de te répondre.
             </p>
             <Chip tone={aiStatus === 'configured' ? 'success' : 'warning'}>{aiStatus === 'configured' ? 'Clé configurée côté serveur' : aiStatus === 'missing' ? 'Clé non configurée côté serveur' : 'Vérification de la configuration…'}</Chip>
-            <Switch id="set-ai" label="Utiliser Gemini" description="Création et consultation uniquement. En cas d’échec, le moteur local prend le relais et un avertissement apparaît." checked={Boolean(settings.aiEnabled)} onChange={(value) => onSettings({ aiEnabled: value })} />
-            <p className="field-hint">Configure GEMINI_API_KEY côté serveur et redémarre l’application. Ne colle pas ta clé dans une conversation. L’offre gratuite dépend des quotas et conditions de Google.</p>
+            <Switch id="set-agent" label="Mode agent" description="Boucle raison → agir → vérifier. Sans clé serveur, l'application repasse automatiquement sur le moteur local." checked={settings.agentMode !== false} onChange={(value) => onSettings({ agentMode: value })} />
+            <Switch id="set-ai" label="Compréhension simple (repli)" description="Ancien mode : Gemini interprète seulement création et consultation. Utile si le mode agent échoue." checked={Boolean(settings.aiEnabled)} onChange={(value) => onSettings({ aiEnabled: value })} />
+            <p className="field-hint">Configure GEMINI_API_KEYS côté serveur et redémarre l'application. Ne colle pas ta clé dans une conversation. L'agent envoie la phrase, l'historique et un résumé des tâches à Google ; l'offre gratuite dépend des quotas.</p>
           </section>
         )}
 
