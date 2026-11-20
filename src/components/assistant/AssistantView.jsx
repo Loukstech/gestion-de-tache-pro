@@ -26,6 +26,7 @@ export default function AssistantView({
   onQuickAdd,
   autoScroll = true,
   compact = false,
+  focusToken = 0,
 }) {
   const [draft, setDraft] = useState('')
   const scrollRef = useRef(null)
@@ -36,6 +37,17 @@ export default function AssistantView({
     if (!autoScroll) return
     bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
   }, [messages.length, thinking, interim, autoScroll])
+
+  useEffect(() => {
+    if (!focusToken) return undefined
+    const frame = requestAnimationFrame(() => {
+      const field = composerRef.current
+      if (!field) return
+      field.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      field.focus({ preventScroll: true })
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [focusToken])
 
   useEffect(() => {
     if (listening && interim) setDraft(interim)

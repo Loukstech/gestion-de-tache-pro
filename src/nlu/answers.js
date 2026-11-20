@@ -151,7 +151,10 @@ function answerCreate(interpretation, allTasks, now) {
   })
 
   const spoken = created.length === 1
-    ? `C'est noté. ${lines[0].task.title}. ${describeOne(lines[0].task, now)} J'ai classé ça dans ${CATEGORIES[lines[0].task.category].label}.`
+    ? (() => {
+        const details = describeOne(lines[0].task, now)
+        return `C’est noté : ${lines[0].task.title}.${details ? ` ${details}.` : ''} Je l’ai classée dans ${CATEGORIES[lines[0].task.category].label}.`
+      })()
     : `J'ai créé ${created.length} tâches. ${lines.map((line, index) => `${index + 1}. ${line.task.title}, ${describeOne(line.task, now)}`).join(' ')}`
 
   return {

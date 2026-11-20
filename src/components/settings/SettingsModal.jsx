@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
+import { Fragment, useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Download, Upload, Trash2, Wand2, Volume2, Database, Mic } from 'lucide-react'
 import Modal from '../primitives/Modal.jsx'
 import Icon from '../primitives/Icon.jsx'
 import { Switch, Segmented, Chip } from '../primitives/Bits.jsx'
 import { speechRecognitionSupported } from '../../hooks/useSpeechRecognition.js'
-import { speechSynthesisSupported, describeVoice } from '../../hooks/useSpeechSynthesis.js'
+import { speechSynthesisSupported, describeVoice, NATURAL_VOICE_PRESET } from '../../hooks/useSpeechSynthesis.js'
 import { CATEGORIES, CATEGORY_ORDER } from '../../nlu/lexicon.js'
 
 const ACCENTS = [
@@ -158,7 +158,25 @@ export default function SettingsModal({
               <button type="button" className="btn btn-sm" onClick={onTestVoice} disabled={!speechSynthesisSupported}>
                 <Volume2 size={14} /> Tester la voix
               </button>
+              <button
+                type="button"
+                className="btn btn-sm btn-primary"
+                onClick={() => onSettings(NATURAL_VOICE_PRESET)}
+              >
+                <Wand2 size={14} /> Réglage naturel
+              </button>
             </div>
+            <div className="setting-desc" style={{ marginTop: 6 }}>
+              « Réglage naturel » sélectionne automatiquement la meilleure voix française disponible et adopte un débit plus calme.
+            </div>
+
+            <Switch
+              id="set-show-dock"
+              label="Bouton flottant vocal"
+              description="Afficher l’orbe et le dock en bas de l’écran. Tu peux le masquer ici sans perdre le micro dans l’assistant."
+              checked={settings.showVoiceDock !== false}
+              onChange={(value) => onSettings({ showVoiceDock: value })}
+            />
 
             <Switch
               id="set-continuous"
@@ -396,7 +414,9 @@ function Tabbed({ children }) {
         ))}
       </div>
       <motion.div key={tab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.22 }}>
-        {children(tab)}
+        {(Array.isArray(children) ? children : [children]).map((child, index) => (
+          <Fragment key={index}>{typeof child === 'function' ? child(tab) : child}</Fragment>
+        ))}
       </motion.div>
     </>
   )

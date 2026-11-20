@@ -43,6 +43,9 @@ export default function App() {
   const [quickAddOpen, setQuickAddOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
+  // Incrémenté quand on clique sur le clavier du dock : l'assistant doit
+  // ouvrir et donner directement le focus au champ de saisie.
+  const [composerFocusToken, setComposerFocusToken] = useState(0)
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [level, setLevel] = useState(0)
@@ -383,6 +386,7 @@ export default function App() {
                       onOpenTask={setActiveTask}
                       onClearConversation={clearConversation}
                       onQuickAdd={() => setQuickAddOpen(true)}
+                      focusToken={composerFocusToken}
                     />
                   ) : view === 'today' ? (
                     <TodayView
@@ -448,7 +452,7 @@ export default function App() {
         </ul>
       </nav>
 
-      {!showOnboarding && (
+      {!showOnboarding && settings.showVoiceDock !== false && (
         <VoiceDock
           listening={listening}
           interim={interim}
@@ -458,7 +462,10 @@ export default function App() {
           thinking={assistant.thinking}
           lastTranscript={lastTranscript}
           onToggle={handleToggleVoice}
-          onOpenAssistant={() => setView('assistant')}
+          onOpenAssistant={() => {
+            setView('assistant')
+            setComposerFocusToken((value) => value + 1)
+          }}
         />
       )}
 

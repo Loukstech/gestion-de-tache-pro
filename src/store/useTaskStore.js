@@ -13,9 +13,10 @@ const DEFAULT_SETTINGS = {
   language: 'fr-FR',
   aiEnabled: false,
   voiceReply: true,
-  rate: 1.04,
+  rate: 0.98,
   pitch: 1,
   voiceName: null,
+  showVoiceDock: true,
   autoListenOnLoad: false,
   continuous: true,
   interimResults: true,
@@ -46,15 +47,27 @@ const mergeTasks = (local, remote) => {
   return [...byId.values()].sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0))
 }
 
+const openTasks = (tasks) => (tasks || []).filter((task) => !task.done)
+const contextHint = (tasks) => {
+  const open = openTasks(tasks)
+  if (!open.length) return 'Rien en cours de ton côté.'
+  const urgent = open.filter((task) => task.priority === 'high' || task.priority === 'critical').length
+  return `Tu as ${open.length} tâche${open.length > 1 ? 's' : ''} en cours${urgent ? `, dont ${urgent} prioritaire${urgent > 1 ? 's' : ''}` : ''}.`
+}
+
 const CHAT_ANSWERS = {
-  greeting: () => ({ headline: 'Salut !', spoken: 'Bonjour ! Comment je peux t’aider aujourd’hui ?' }),
-  wellbeing: () => ({ headline: 'Je vais bien', spoken: 'Je vais très bien, merci ! Et toi, comment ça va ?' }),
+  greeting: (now, tasks) => {
+    const hour = now.getHours()
+    const hello = hour < 12 ? 'Bonjour' : hour < 18 ? 'Bon après-midi' : 'Bonsoir'
+    return { headline: 'Salut !', spoken: `${hello} ! ${contextHint(tasks)} Qu’est-ce qu’on fait ?` }
+  },
+  wellbeing: (now, tasks) => ({ headline: 'Je vais bien', spoken: `Très bien, merci ! ${contextHint(tasks)} On s’en occupe ensemble ?` }),
   thanks: () => ({ headline: 'Avec plaisir', spoken: 'Avec plaisir ! Je suis là si tu as besoin.' }),
-  comprehension: () => ({ headline: 'Oui', spoken: 'Oui, je te comprends parfaitement. Je ne crée pas de tâche pour ça.' }),
+  comprehension: () => ({ headline: 'Oui', spoken: 'Oui, je te suis parfaitement. Dis-moi ce que tu veux faire.' }),
   identity: () => ({ headline: 'TaskVox Pro', spoken: 'Je suis TaskVox Pro, ton gestionnaire de tâches vocal. Je peux créer, retrouver, modifier et supprimer tes tâches en français.' }),
   time: (now) => ({ headline: 'Heure actuelle', spoken: `Il est ${now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}.` }),
   date: (now) => ({ headline: 'Aujourd’hui', spoken: `Nous sommes le ${now.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}.` }),
-  generic: () => ({ headline: 'Je suis là', spoken: 'Oui, je te comprends. Je ne crée pas de tâche pour ça. Dis-moi une action à faire ou une question sur tes tâches.' }),
+  generic: (now, tasks) => ({ headline: 'Je suis là', spoken: `Je suis là, je t’écoute. ${contextHint(tasks)} Dis-moi une tâche à créer, à retrouver ou à terminer.` }),
 }
 
 export const useTaskStore = create((set, get) => ({
@@ -421,7 +434,7 @@ export const useTaskStore = create((set, get) => ({
       const isNegation = interpretation.notice === 'negation'
       const base = isNegation
         ? { headline: 'D’accord', spoken: 'D’accord, je ne fais rien.' }
-        : (CHAT_ANSWERS[interpretation.chatKind] || CHAT_ANSWERS.generic)(now)
+        : (CHAT_ANSWERS[interpretation.chatKind] || CHAT_ANSWERS.generic)(now, get().tasks)
       const answer = {
         kind: 'chat',
         ...base,

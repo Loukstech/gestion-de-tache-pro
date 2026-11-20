@@ -8,19 +8,30 @@ const supported = typeof window !== 'undefined' && 'speechSynthesis' in window
 
 export const speechSynthesisSupported = supported
 
-const NATURAL_HINT = /natural|neural|premium|online|google|aria|elodie|hortense|henri|sonia/i
-const GOOD_FRENCH_HINT = /amelie|audrey|thomas|nicolas|denise/i
+const NATURAL_HINT = /natural|neural|premium|online|google|microsoft|aria|emma|elodie|hortense|henri|sonia|google français/i
+const GOOD_FRENCH_HINT = /amelie|audrey|thomas|nicolas|denise|françoise|francoise/i
+const ROBOTIC_HINT = /espeak|festival|pico|robot|compact|simplified|basic/i
+
+/** Réglage recommandé pour une voix plus naturelle en français. */
+export const NATURAL_VOICE_PRESET = { rate: 0.98, pitch: 1, voiceName: null }
 
 /** Étiquette affichée dans les réglages pour repérer les meilleures voix. */
 export function describeVoice(voice) {
   if (!voice) return ''
-  return `${voice.name}${NATURAL_HINT.test(voice.name) ? ' · naturelle' : ''}`
+  const tags = []
+  if (NATURAL_HINT.test(voice.name)) tags.push('naturelle')
+  if (!voice.localService && NATURAL_HINT.test(voice.name)) tags.push('en ligne')
+  else if (voice.localService) tags.push('hors ligne')
+  return tags.length ? `${voice.name} · ${tags.join(' · ')}` : voice.name
 }
 
 function voiceScore(voice) {
   let score = 0
-  if (NATURAL_HINT.test(voice.name)) score += 3
-  else if (GOOD_FRENCH_HINT.test(voice.name)) score += 2
+  // Une voix "natural/neural/online" reste préférable même si elle demande
+  // Internet : c'est elle qui sonne le moins robotique en français.
+  if (NATURAL_HINT.test(voice.name)) score += 8
+  else if (GOOD_FRENCH_HINT.test(voice.name)) score += 4
+  if (ROBOTIC_HINT.test(voice.name)) score -= 10
   if (voice.localService) score += 1
   return score
 }
