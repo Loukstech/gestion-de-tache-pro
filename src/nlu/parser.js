@@ -122,6 +122,7 @@ const NOISE_FILLERS = [
   boundaryRegex("est-ce que tu peux|est ce que tu peux|peux-tu|pourrais-tu|tu peux|tu pourrais", 'gi'),
   boundaryRegex("il faut que je|il faut que j'|il faut|faut que je|faut que j'|je dois|j'ai à|j'ai a", 'gi'),
   /\bc'est fait\b/gi,
+  boundaryRegex("en gestion de tâches|en gestion de tache", 'gi'),
   boundaryRegex("je veux|je voudrais|j'aimerais|j aimerai", 'gi'),
 ]
 
@@ -130,11 +131,11 @@ const CREATION_PREFIXES = [
   // le motif de mordre dans le premier mot du titre (« il faut » ≠ « arroser »).
   new RegExp(
     `^\\s*(?:bon\\s+)?(?:tu\\s+)?(?:vas\\s+|veux\\s+|peux\\s+|pourrais\\s+)?(?:me\\s+|nous\\s+|m')?` +
-      `(?:ajouter|ajoute|ajoutes|ajoutez|crée|cree|crées|creez|creer|enregistre|enregistrer|note|noter|mémorise|memorise|mettre|planifie|programme)(?![\\p{L}])\\s+` +
+      `(?:ajouter|ajoute|ajoutes|ajoutez|crée|cree|crées|creez|creer|enregistre|enregistrer|note|noter|mémorise|memorise|mettre|planifie|programme)(?:[- ](?:moi|me|nous))?(?![\\p{L}])\\s+` +
       `(?:moi\\s+)?(?:une?\\s+|des\\s+|la\\s+|le\\s+|les\\s+)?` +
       `(?:nouvelle\\s+|autre\\s+|petite\\s+)?` +
       `(?:tâches?|taches?|trucs?|choses?|activités?|activites?|actions?|rappels?|items?|éléments?|elements?)?` +
-      `\\s*(?:supplémentaire|supplementaire)?\\s*(?:(?:pour|sur|dans|a|à)(?![\\p{L}]))?\\s*`,
+      `\\s*(?:supplémentaire|supplementaire)?\\s*(?:(?:pour|sur|dans|a|à|de)(?![\\p{L}]))?\\s*`,
     'iu',
   ),
   /^\s*(?:nouvelle|nouveau)\s+(?:tâche|tache|rappel|action|truc)\s*(?::|\s)?\s*/i,

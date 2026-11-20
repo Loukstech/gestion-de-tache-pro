@@ -319,6 +319,21 @@ for (const phrase of ['Acheter médicaments', 'Prendre rendez-vous chez le denti
   })
 }
 
+console.log('\n═══ 9. PRÉFIXES AVEC TIRET ═══\n')
+
+for (const [phrase, expected] of [
+  ['Crée-moi une tâche en gestion de tâches application de gestion de stage', 'Application de gestion de stage'],
+  ['Ajoute-moi une tâche appeler le client demain', 'Appeler le client'],
+  ['Note-moi de faire les courses', 'Faire les courses'],
+  ['Crée une tâche tester le modèle', 'Tester le modèle'],
+]) {
+  check(`« ${phrase} » → "${expected}"`, () => {
+    const result = interpret(phrase, { now: NOW })
+    return assert(result.intent === 'create' && result.tasks[0]?.title === expected,
+      `intent=${result.intent}, titre="${result.tasks[0]?.title}"`)
+  })
+}
+
 console.log(`\n${'═'.repeat(46)}`)
 console.log(`  Résultat : ${passed} réussis · ${failed} échoués`)
 console.log('═'.repeat(46))
