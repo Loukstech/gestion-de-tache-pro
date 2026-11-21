@@ -1,6 +1,7 @@
 import { defineConfig, loadEnv } from 'vite'
 import { geminiMiddleware } from './server/gemini.js'
 import { agentMiddleware } from './server/agent.js'
+import { ttsMiddleware } from './server/tts.js'
 import react from '@vitejs/plugin-react'
 
 // The app is served through the Arena live-preview proxy, so we must:
@@ -14,11 +15,17 @@ export default defineConfig(({ mode }) => {
   const model = process.env.GEMINI_MODEL || env.GEMINI_MODEL || 'gemini-flash-lite-latest'
   const gemini = geminiMiddleware({ apiKey, apiKeys: keyList, model })
   const agent = agentMiddleware({ apiKey, apiKeys: keyList, model })
+  const tts = ttsMiddleware({
+    apiKey,
+    apiKeys: keyList,
+    model: process.env.TTS_MODEL || env.TTS_MODEL || 'gemini-3.8-flash-lite-tts',
+    voice: process.env.TTS_VOICE || env.TTS_VOICE || 'Kore',
+  })
   return {
   plugins: [react(), {
     name: 'taskvox-ai',
-    configureServer(server) { server.middlewares.use(agent); server.middlewares.use(gemini) },
-    configurePreviewServer(server) { server.middlewares.use(agent); server.middlewares.use(gemini) },
+    configureServer(server) { server.middlewares.use(agent); server.middlewares.use(gemini); server.middlewares.use(tts) },
+    configurePreviewServer(server) { server.middlewares.use(agent); server.middlewares.use(gemini); server.middlewares.use(tts) },
   }],
   server: {
     host: '0.0.0.0',

@@ -205,7 +205,7 @@ export function agentMiddleware({ apiKey, apiKeys, model = 'gemini-flash-lite-la
     res.setHeader('Content-Type', 'application/json; charset=utf-8')
     const reply = (status, body) => { res.statusCode = status; res.end(JSON.stringify(body)) }
 
-    if (path === '/api/ai/status' && req.method === 'GET') return reply(200, { configured: keys.length > 0, keyCount: keys.length, agent: true })
+    if (path === '/api/ai/status' && req.method === 'GET') return reply(200, { configured: keys.length > 0, keyCount: keys.length, agent: true, tts: keys.length > 0 })
 
     if (path !== '/api/ai/agent' || req.method !== 'POST') return reply(405, { error: 'Méthode non autorisée.' })
     const origin = req.headers.origin
