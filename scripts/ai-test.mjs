@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { createServer } from 'node:http'
 import { geminiMiddleware } from '../server/gemini.js'
 import { agentMiddleware } from '../server/agent.js'
+import { ttsMiddleware } from '../server/tts.js'
 import { executeTool } from '../src/agent/runAgent.js'
 import { adaptAiResult } from '../src/nlu/ai.js'
 
@@ -35,7 +36,7 @@ test('serveur : clé non exposée, contrôle origine et requête Gemini simulée
   const url = `http://127.0.0.1:${server.address().port}`
   try {
     const status = await fetch(`${url}/api/ai/status`)
-    assert.deepEqual(await status.json(), { configured: true, keyCount: 1 })
+    assert.deepEqual(await status.json(), { configured: true, keyCount: 1, tts: true })
     const body = JSON.stringify({ text: 'mes tâches', now: '2026-11-19T08:30' })
     const rejected = await fetch(`${url}/api/ai/interpret`, { method: 'POST', headers: { 'content-type': 'application/json', origin: 'https://evil.example' }, body })
     assert.equal(rejected.status, 403)
@@ -59,7 +60,7 @@ test('serveur : bascule automatique vers la clé valide suivante', async () => {
   const url = `http://127.0.0.1:${server.address().port}`
   try {
     const status = await fetch(`${url}/api/ai/status`)
-    assert.deepEqual(await status.json(), { configured: true, keyCount: 2 })
+    assert.deepEqual(await status.json(), { configured: true, keyCount: 2, tts: true })
     const response = await fetch(`${url}/api/ai/interpret`, {
       method: 'POST',
       headers: { 'content-type': 'application/json', origin: url },
@@ -85,7 +86,7 @@ test('serveur agent : statut, origine et conservation des appels d’outils', as
   const url = `http://127.0.0.1:${server.address().port}`
   try {
     const status = await fetch(`${url}/api/ai/status`)
-    assert.deepEqual(await status.json(), { configured: true, keyCount: 1, agent: true })
+    assert.deepEqual(await status.json(), { configured: true, keyCount: 1, agent: true, tts: true })
     const body = JSON.stringify({ text: 'crée une tâche', now: '2026-11-20T10:00', history: [], tasks: [] })
     const rejected = await fetch(`${url}/api/ai/agent`, { method: 'POST', headers: { 'content-type': 'application/json', origin: 'https://evil.example' }, body })
     assert.equal(rejected.status, 403)
@@ -145,4 +146,33 @@ test('agent outils : création locale, confirmation suppression et filtres born�
   const deleted = await executeTool(store, { name: 'delete_tasks', args: { task_ids: ['t1'], confirmed_by_user: true } }, now)
   assert.equal(deleted.ok, true)
   assert.equal(state.tasks.some((task) => task.id === 't1'), false)
+})
+
+test('serveur TTS : voix Google simulée, origine contrôlée et bascule de clé', async () => {
+  let sent
+  const middleware = ttsMiddleware({ apiKeys: 'cle-invalide,cle-valide', fetchImpl: async (url, options) => {
+    sent = { url, options, body: JSON.parse(options.body) }
+    if (options.headers['x-goog-api-key'] === 'cle-invalide') return { ok: false, status: 429 }
+    return { ok: true, json: async () => ({
+      candidates: [{ content: { parts: [{ inlineData: { mimeType: 'audio/wav', data: Buffer.from('RIFFtest').toString('base64') } }] } }],
+    }) }
+  } })
+  const server = createServer((req, res) => middleware(req, res, () => { res.statusCode = 404; res.end() }))
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve))
+  const url = `http://127.0.0.1:${server.address().port}`
+  try {
+    const body = JSON.stringify({ text: 'Bonjour, ceci est un test.', language: 'fr-FR' })
+    const rejected = await fetch(`${url}/api/ai/tts`, { method: 'POST', headers: { 'content-type': 'application/json', origin: 'https://evil.example' }, body })
+    assert.equal(rejected.status, 403)
+    const tooLong = await fetch(`${url}/api/ai/tts`, { method: 'POST', headers: { 'content-type': 'application/json', origin: url }, body: JSON.stringify({ text: 'a'.repeat(1200) }) })
+    assert.equal(tooLong.status, 400)
+    const response = await fetch(`${url}/api/ai/tts`, { method: 'POST', headers: { 'content-type': 'application/json', origin: url }, body })
+    assert.equal(response.status, 200)
+    assert.match(response.headers.get('content-type'), /audio\/wav/)
+    assert.equal(Buffer.from(await response.arrayBuffer()).toString(), 'RIFFtest')
+    assert.equal(sent.url.includes('gemini-3.8-flash-lite-tts'), true)
+    assert.equal(sent.options.headers['x-goog-api-key'], 'cle-valide')
+    assert.equal(sent.body.generationConfig.speechConfig.voiceConfig.prebuiltVoiceConfig.voiceName, 'Kore')
+    assert.equal(sent.body.generationConfig.speechConfig.languageCode, 'fr-FR')
+  } finally { await new Promise((resolve) => server.close(resolve)) }
 })

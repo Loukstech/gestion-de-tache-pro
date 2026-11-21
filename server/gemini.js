@@ -15,7 +15,7 @@ export function geminiMiddleware({ apiKey, apiKeys, model = 'gemini-flash-lite-l
     res.setHeader('Cache-Control', 'no-store')
     res.setHeader('Content-Type', 'application/json; charset=utf-8')
     const reply = (status, body) => { res.statusCode = status; res.end(JSON.stringify(body)) }
-    if (path === '/api/ai/status' && req.method === 'GET') return reply(200, { configured: keys.length > 0, keyCount: keys.length })
+    if (path === '/api/ai/status' && req.method === 'GET') return reply(200, { configured: keys.length > 0, keyCount: keys.length, tts: keys.length > 0 })
     if (path !== '/api/ai/interpret' || req.method !== 'POST') return reply(405, { error: 'Méthode non autorisée.' })
     // Only explicit foreign origins are rejected: some sharing proxies strip
     // the Origin header, and those requests must still work. Browsers also

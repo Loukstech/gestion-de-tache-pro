@@ -103,6 +103,8 @@ export default function App() {
     pitch: settings.pitch,
     voiceName: settings.voiceName,
     enabled: settings.voiceReply,
+    googleVoice: settings.googleVoice !== false,
+    googleVoiceName: settings.googleVoiceName || 'Kore',
   })
 
   const handleFinalTranscript = useCallback(

@@ -15,6 +15,8 @@ const DEFAULT_SETTINGS = {
   aiEnabled: false,
   agentMode: true,
   voiceReply: true,
+  googleVoice: true,
+  googleVoiceName: 'Kore',
   rate: 0.98,
   pitch: 1,
   voiceName: null,

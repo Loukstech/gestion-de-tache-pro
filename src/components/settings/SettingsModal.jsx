@@ -5,7 +5,7 @@ import Modal from '../primitives/Modal.jsx'
 import Icon from '../primitives/Icon.jsx'
 import { Switch, Segmented, Chip } from '../primitives/Bits.jsx'
 import { speechRecognitionSupported } from '../../hooks/useSpeechRecognition.js'
-import { speechSynthesisSupported, describeVoice, NATURAL_VOICE_PRESET } from '../../hooks/useSpeechSynthesis.js'
+import { speechSynthesisSupported, describeVoice, NATURAL_VOICE_PRESET, GOOGLE_VOICES } from '../../hooks/useSpeechSynthesis.js'
 import { CATEGORIES, CATEGORY_ORDER } from '../../nlu/lexicon.js'
 import { aiUrl } from '../../lib/ai-url.js'
 
@@ -40,14 +40,17 @@ export default function SettingsModal({
   const fileRef = useRef(null)
   const [confirmClear, setConfirmClear] = useState(false)
   const [aiStatus, setAiStatus] = useState(null)
+  const [ttsReady, setTtsReady] = useState(false)
   const [cloudEmail, setCloudEmail] = useState('')
   const [cloudPassword, setCloudPassword] = useState('')
   useEffect(() => {
     if (!open) return
     let active = true
     fetch(aiUrl('/api/ai/status')).then((res) => res.ok ? res.json() : Promise.reject()).then((data) => {
-      if (active) setAiStatus(data.configured ? 'configured' : 'missing')
-    }).catch(() => { if (active) setAiStatus('missing') })
+      if (!active) return
+      setAiStatus(data.configured ? 'configured' : 'missing')
+      setTtsReady(Boolean(data.tts))
+    }).catch(() => { if (active) { setAiStatus('missing'); setTtsReady(false) } })
     return () => { active = false }
   }, [open])
 
@@ -83,15 +86,18 @@ export default function SettingsModal({
               <Mic size={16} color="var(--accent-2)" /> Voix
             </h3>
             <p style={{ margin: '0 0 12px', fontSize: 12.5, color: 'var(--text-dim)' }}>
-              Reconnaissance et synthèse utilisent la Web Speech API du navigateur : gratuit, sans compte, sans serveur.
+              La dictée utilise le navigateur. Les réponses parlées utilisent la voix Google (API Gemini, clés protégées sur le serveur), avec repli automatique sur la voix locale.
             </p>
 
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
               <Chip icon={speechRecognitionSupported ? 'CheckCircle2' : 'AlertTriangle'} tone={speechRecognitionSupported ? 'success' : 'warning'}>
                 Dictée vocale : {speechRecognitionSupported ? 'disponible' : 'indisponible sur ce navigateur'}
               </Chip>
+              <Chip icon={ttsReady ? 'CheckCircle2' : 'AlertTriangle'} tone={ttsReady ? 'success' : 'warning'}>
+                Voix Google : {ttsReady ? 'disponible' : 'non configurée'}
+              </Chip>
               <Chip icon={speechSynthesisSupported ? 'CheckCircle2' : 'AlertTriangle'} tone={speechSynthesisSupported ? 'success' : 'warning'}>
-                Réponse parlée : {speechSynthesisSupported ? 'disponible' : 'indisponible'}
+                Voix de secours : {speechSynthesisSupported ? 'disponible' : 'indisponible'}
               </Chip>
             </div>
 
@@ -103,10 +109,38 @@ export default function SettingsModal({
               onChange={(value) => onSettings({ voiceReply: value })}
             />
 
+            <Switch
+              id="set-google-voice"
+              label="Voix Google naturelle"
+              description="Utilise l’API Gemini pour une prononciation bien plus naturelle, y compris sur iPhone. Si elle échoue, l’appli repasse sur la voix du navigateur."
+              checked={settings.googleVoice !== false}
+              onChange={(value) => onSettings({ googleVoice: value })}
+            />
+
+            {settings.googleVoice !== false && (
+              <div className="setting-row">
+                <div className="setting-text">
+                  <div className="setting-title" id="set-google-voice-name">Timbre Google</div>
+                  <div className="setting-desc">Choisis le timbre qui te plaît ; tous parlent français.</div>
+                </div>
+                <select
+                  className="select"
+                  style={{ maxWidth: 220 }}
+                  aria-labelledby="set-google-voice-name"
+                  value={settings.googleVoiceName || 'Kore'}
+                  onChange={(event) => onSettings({ googleVoiceName: event.target.value })}
+                >
+                  {GOOGLE_VOICES.map((item) => (
+                    <option key={item.value} value={item.value}>{item.label}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             <div className="setting-row">
               <div className="setting-text">
-                <div className="setting-title" id="set-voice-name">Voix de synthèse</div>
-                <div className="setting-desc">{frenchVoices.length ? `${frenchVoices.length} voix française${frenchVoices.length > 1 ? 's' : ''} détectée${frenchVoices.length > 1 ? 's' : ''} · les meilleures en premier. « Tester la voix » pour comparer.` : 'Aucune voix française détectée : la voix par défaut du système sera utilisée'}</div>
+                <div className="setting-title" id="set-voice-name">Voix de secours (navigateur)</div>
+                <div className="setting-desc">{frenchVoices.length ? `${frenchVoices.length} voix française${frenchVoices.length > 1 ? 's' : ''} détectée${frenchVoices.length > 1 ? 's' : ''} · utilisée seulement si Google est indisponible.` : 'Aucune voix française détectée : la voix par défaut du système sera utilisée'}</div>
               </div>
               <select
                 className="select"
@@ -156,7 +190,7 @@ export default function SettingsModal({
             </div>
 
             <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
-              <button type="button" className="btn btn-sm" onClick={onTestVoice} disabled={!speechSynthesisSupported}>
+              <button type="button" className="btn btn-sm" onClick={onTestVoice} disabled={!speechSynthesisSupported && !ttsReady}>
                 <Volume2 size={14} /> Tester la voix
               </button>
               <button
@@ -168,7 +202,7 @@ export default function SettingsModal({
               </button>
             </div>
             <div className="setting-desc" style={{ marginTop: 6 }}>
-              « Réglage naturel » sélectionne automatiquement la meilleure voix française disponible et adopte un débit plus calme.
+              « Réglage naturel » adopte un débit plus calme et sélectionne la meilleure voix française de secours. Avec Google activé, la hauteur et la vitesse de secours ne s’appliquent pas.
             </div>
 
             <Switch
